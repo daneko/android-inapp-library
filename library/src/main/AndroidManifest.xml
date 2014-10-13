@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="jp.daneko.android.inappv3">
+
+    <!-- for in-app billing -->
+    <uses-permission android:name="com.android.vending.BILLING"/>
+
+    <!-- for robolectric -->
+    <application/>
+</manifest>

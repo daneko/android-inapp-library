@@ -1,0 +1,133 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'me.tatarka:gradle-retrolambda:2.4.0'
+        classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.+'
+        classpath 'com.github.jcandksolutions.gradle:android-unit-test:1.6.2'
+    }
+}
+
+apply plugin: 'android-sdk-manager'
+apply plugin: 'com.android.library'
+apply plugin: 'retrolambda'
+apply plugin: 'maven'
+
+
+android {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    compileSdkVersion 20
+    buildToolsVersion "20.0.0"
+
+    defaultConfig {
+        // com.exampleはgoogle play に上げられなかった
+        applicationId "jp.daneko.android.billing"
+        minSdkVersion 15
+        targetSdkVersion 20
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            runProguard false
+        }
+    }
+
+    // 一旦checkコマンドを走らせるためにlint時にabortしないようにする
+    lintOptions {
+        abortOnError false
+    }
+}
+
+apply plugin: 'android-unit-test'
+
+dependencies {
+
+    compile 'io.reactivex:rxandroid:0.22.0'
+
+    compile 'org.functionaljava:functionaljava:4.2-beta-1'
+
+    compile 'org.slf4j:slf4j-api:1.7.6'
+
+    compile 'com.google.code.findbugs:jsr305:3.0.0'
+
+    provided 'org.projectlombok:lombok:1.14.8'
+
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    testCompile 'junit:junit:4.10'
+    testCompile 'org.robolectric:robolectric:2.3'
+    testCompile 'com.squareup.assertj:assertj-android:1.0.0'
+    testCompile 'org.mockito:mockito-all:1.10.8'
+    testCompile 'ch.qos.logback:logback-classic:1.1.2'
+}
+
+androidUnitTest {
+    testReleaseBuildType true
+    //Run tests for all the build types including non-debuggable (like the Release build type). Only works for Application projects, not Library projects.
+    downloadDependenciesSources true
+    //Download the sources.jar for the production dependencies. `true` by default.
+    downloadDependenciesJavadoc true
+    //Download the javadoc.jar for the production dependencies. `false` by default.
+    downloadTestDependenciesSources true
+    //Download the sources.jar for the test dependencies. `true` by default.
+    downloadTestDependenciesJavadoc true
+    //Download the javadoc.jar for the test dependencies. `false` by default.
+}
+
+retrolambda {
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def j8Home = properties.getProperty('java8_home')
+    def j7Home = properties.getProperty('java7_home')
+
+    jdk j8Home ?: System.getenv("JAVA8_HOME")
+    oldJdk j7Home ?: System.getenv("JAVA7_HOME")
+    javaVersion JavaVersion.VERSION_1_7
+    //jvmArgs '-arg1', '-arg2'
+}
+
+
+/**
+ * android-unit-test と retrolambda はpluginなので、評価後でないとtaskとして取得できない
+ * また android-unit-test が提供する test / testClasses というコマンドのうちの前者に
+ * compileRetrolambda を依存させる必要があるため下記のようなコードとなった
+ */
+afterEvaluate {
+    tasks.matching { t ->
+        t.getName().indexOf('test') == 0 && t.getName().indexOf('Classes') == -1
+    }.each { t ->
+        t.dependsOn('compileRetrolambda' + t.getName().substring('test'.length()))
+    }
+}
+
+/**
+ * archive
+ */
+
+task androidSourcesJar(type: Jar) {
+  classifier = 'sources'
+  from android.sourceSets.main.java.sourceFiles
+}
+
+artifacts {
+  archives androidSourcesJar
+}
+
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      repository url: "file://${project.rootDir}/../android_inapp_library_maven/repository"
+      pom.version = '0.0.1-SNAPSHOT'
+      pom.groupId = 'jp.daneko'
+      pom.artifactId = 'android-inapp-library'
+    }
+  }
+}

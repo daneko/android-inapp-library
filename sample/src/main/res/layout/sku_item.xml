@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:orientation="horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:text="@string/sku_item_type"
+            tools:text="type"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+        <TextView
+            android:text="@string/sku_item_price"
+            tools:text="price"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+        <TextView
+            android:text="@string/sku_item_title"
+            tools:text="title"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+        <TextView
+            android:text="@string/sku_item_desc"
+            tools:text="description"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+        <TextView
+            android:text="@string/sku_item_check_purchase"
+            tools:text="purchase?"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/type_txt"
+            tools:text="type"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+        <TextView
+            android:id="@+id/price_txt"
+            tools:text="price"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+        <TextView
+            android:id="@+id/title_txt"
+            tools:text="title"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+        <TextView
+            android:id="@+id/desc_txt"
+            tools:text="description"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+        <TextView
+            android:id="@+id/buy_txt"
+            tools:text="true"
+            android:layout_width="match_parent"
+            android:layout_height="24dp"/>
+
+    </LinearLayout>
+</LinearLayout>
