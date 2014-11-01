@@ -1,4 +1,4 @@
-package jp.daneko.android.inappv3.exception;
+package com.github.daneko.android.iab.exception;
 
 /**
  * 事実上Runtimeなのでは感

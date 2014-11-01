@@ -1,4 +1,4 @@
-package jp.daneko.android.inappv3;
+package com.github.daneko.android.iab;
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -41,14 +41,14 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import jp.daneko.android.inappv3.exception.IabException;
-import jp.daneko.android.inappv3.model.ActivityResults;
-import jp.daneko.android.inappv3.model.BillingType;
-import jp.daneko.android.inappv3.model.IabItemType;
-import jp.daneko.android.inappv3.model.Product;
-import jp.daneko.android.inappv3.model.ProductBaseInfo;
-import jp.daneko.android.inappv3.model.Purchase;
-import jp.daneko.android.inappv3.model.SkuDetails;
+import com.github.daneko.android.iab.exception.IabException;
+import com.github.daneko.android.iab.model.ActivityResults;
+import com.github.daneko.android.iab.model.BillingType;
+import com.github.daneko.android.iab.model.IabItemType;
+import com.github.daneko.android.iab.model.Product;
+import com.github.daneko.android.iab.model.ProductBaseInfo;
+import com.github.daneko.android.iab.model.Purchase;
+import com.github.daneko.android.iab.model.SkuDetails;
 
 /**
  * sample

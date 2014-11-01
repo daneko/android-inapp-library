@@ -1,10 +1,10 @@
-package jp.daneko.android.inappv3;
+package com.github.daneko.android.iab;
 
 import android.app.Activity;
 
 import rx.subjects.PublishSubject;
 
-import jp.daneko.android.inappv3.model.ActivityResults;
+import com.github.daneko.android.iab.model.ActivityResults;
 
 /**
  * 名前はあとで考える

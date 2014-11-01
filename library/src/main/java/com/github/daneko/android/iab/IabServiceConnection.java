@@ -1,4 +1,4 @@
-package jp.daneko.android.inappv3;
+package com.github.daneko.android.iab;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -28,8 +28,8 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import jp.daneko.android.inappv3.exception.IabException;
-import jp.daneko.android.inappv3.model.IabItemType;
+import com.github.daneko.android.iab.exception.IabException;
+import com.github.daneko.android.iab.model.IabItemType;
 
 import static fj.data.Option.none;
 

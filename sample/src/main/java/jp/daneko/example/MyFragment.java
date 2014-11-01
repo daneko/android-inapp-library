@@ -21,9 +21,9 @@ import rx.schedulers.Schedulers;
 
 import lombok.extern.slf4j.Slf4j;
 
-import jp.daneko.android.inappv3.IabContext;
-import jp.daneko.android.inappv3.IabService;
-import jp.daneko.android.inappv3.model.Product;
+import com.github.daneko.android.iab.IabContext;
+import com.github.daneko.android.iab.IabService;
+import com.github.daneko.android.iab.model.Product;
 
 /**
  * A placeholder fragment containing a simple view.

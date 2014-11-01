@@ -15,8 +15,8 @@ import butterknife.InjectView;
 import fj.F;
 import fj.Unit;
 
-import jp.daneko.android.inappv3.model.Product;
-import jp.daneko.android.inappv3.model.SkuDetails;
+import com.github.daneko.android.iab.model.Product;
+import com.github.daneko.android.iab.model.SkuDetails;
 
 /**
  */

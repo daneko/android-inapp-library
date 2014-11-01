@@ -1,5 +1,5 @@
 
-package jp.daneko.android.inappv3.model;
+package com.github.daneko.android.iab.model;
 
 import android.content.Intent;
 

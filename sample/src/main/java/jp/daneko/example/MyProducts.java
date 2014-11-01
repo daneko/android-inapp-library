@@ -2,8 +2,8 @@ package jp.daneko.example;
 
 import fj.data.Set;
 
-import jp.daneko.android.inappv3.model.BillingType;
-import jp.daneko.android.inappv3.model.ProductBaseInfo;
+import com.github.daneko.android.iab.model.BillingType;
+import com.github.daneko.android.iab.model.ProductBaseInfo;
 
 /**
  */

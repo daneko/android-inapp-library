@@ -19,8 +19,8 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    compileSdkVersion 20
-    buildToolsVersion "20.0.0"
+    compileSdkVersion 21
+    buildToolsVersion "21.1"
 
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
@@ -34,7 +34,7 @@ android {
         // com.exampleはgoogle play に上げられなかった
         applicationId "jp.daneko.example"
         minSdkVersion 15
-        targetSdkVersion 20
+        targetSdkVersion 21
         versionCode 4
         versionName "0.1 alpha"
         buildConfigField "String", "PUBLIC_KEY", "\"$publicKey\""
@@ -69,9 +69,14 @@ android {
     }
 }
 
+repositories {
+    maven { url 'https://daneko.github.io/m2repo/repository' }
+}
+
 dependencies {
 
-    compile project(':library')
+    debugCompile project(':library')
+    releaseCompile 'com.github.daneko:android-inapp-library:0.0.1-SNAPSHOT'
 
     // for slf4j
     compile 'com.github.tony19:logback-android-core:1.1.1-3'

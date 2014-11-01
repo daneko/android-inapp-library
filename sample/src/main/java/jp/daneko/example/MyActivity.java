@@ -12,8 +12,8 @@ import rx.subjects.PublishSubject;
 
 import lombok.Getter;
 
-import jp.daneko.android.inappv3.model.ActivityResults;
-import jp.daneko.android.inappv3.IabContext;
+import com.github.daneko.android.iab.model.ActivityResults;
+import com.github.daneko.android.iab.IabContext;
 
 public class MyActivity extends Activity implements IabContext {
 

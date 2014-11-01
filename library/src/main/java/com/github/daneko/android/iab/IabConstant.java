@@ -1,4 +1,4 @@
-package jp.daneko.android.inappv3;
+package com.github.daneko.android.iab;
 
 import android.os.Bundle;
 

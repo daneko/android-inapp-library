@@ -11,11 +11,11 @@
 
 ```
 repositories {
-    maven { url 'http://daneko.github.io/android-inapp-library/repository' }
+    maven { url 'https://daneko.github.io/m2repo/repository' }
 }
 
 dependencies {
-    compile 'jp.daneko:android-inapp-library:0.0.1-SNAPSHOT@aar'
+    compile 'com.github.daneko:android-inapp-library:0.0.1-SNAPSHOT'
 }
 ```
 
@@ -49,6 +49,7 @@ java8_home=/Library/Java/JavaVirtualMachines/jdk1.8.0_20.jdk/Contents/Home
 java7_home=/Library/Java/JavaVirtualMachines/jdk1.7.0_67.jdk/Contents/Home
 
 ## for sample app
+
 public_key=copy from google developer console
 release.storeFile=/path/to/your.keystore
 release.storePass=store pass
