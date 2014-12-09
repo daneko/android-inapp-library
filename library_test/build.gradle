@@ -1,0 +1,45 @@
+apply plugin: 'groovy'
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def androidSdk = properties.getProperty('sdk.dir') ?: System.getenv("ANDROID_HOME")
+def googleLocalRepo = new File(androidSdk, "extras/android/m2repository/").toURI()
+
+repositories {
+    mavenCentral()
+    maven { url googleLocalRepo }
+}
+
+dependencies {
+
+    compile 'org.robospock:robospock:0.5.0'
+    compile 'org.mockito:mockito-all:1.9.5'
+
+//    compile project(":library")
+    compile fileTree(dir: project(":library").file("build/fortest"), include: "*.jar")
+
+    compile 'io.reactivex:rxandroid:0.23.0'
+
+    compile 'org.functionaljava:functionaljava:4.2-beta-1'
+
+    compile 'org.slf4j:slf4j-api:1.7.6'
+
+    compile 'com.google.code.findbugs:jsr305:3.0.0'
+
+    testCompile 'ch.qos.logback:logback-classic:1.1.2'
+}
+
+sourceSets.test.java.srcDirs += ['../library/build/generated/source/r/debug']
+
+test {
+    testLogging {
+        lifecycle {
+            exceptionFormat "full"
+        }
+    }
+
+    workingDir = '../library/src/main'
+
+}
+
+tasks["compileJava"].dependsOn ":library:zip2jar"

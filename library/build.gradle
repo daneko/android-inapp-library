@@ -61,14 +61,6 @@ dependencies {
     compile 'com.google.code.findbugs:jsr305:3.0.0'
 
     provided 'org.projectlombok:lombok:1.14.8'
-
-    /*
-    testCompile 'junit:junit:4.10'
-    testCompile 'org.robolectric:robolectric:2.3'
-    testCompile 'com.squareup.assertj:assertj-android:1.0.0'
-    testCompile 'org.mockito:mockito-all:1.10.8'
-    testCompile 'ch.qos.logback:logback-classic:1.1.2'
-    */
 }
 
 retrolambda {
@@ -77,19 +69,6 @@ retrolambda {
     oldJdk j7Home ?: System.getenv("JAVA7_HOME")
     javaVersion JavaVersion.VERSION_1_7
     //jvmArgs '-arg1', '-arg2'
-}
-
-/**
- * android-unit-test と retrolambda はpluginなので、評価後でないとtaskとして取得できない
- * また android-unit-test が提供する test / testClasses というコマンドのうちの前者に
- * compileRetrolambda を依存させる必要があるため下記のようなコードとなった
- */
-afterEvaluate {
-    tasks.matching { t ->
-        t.getName().indexOf('test') == 0 && t.getName().indexOf('Classes') == -1
-    }.each { t ->
-        t.dependsOn('compileRetrolambda' + t.getName().substring('test'.length()))
-    }
 }
 
 /**
@@ -132,3 +111,10 @@ uploadArchives {
         }
     }
 }
+
+task zip2jar(type: Zip, dependsOn: "bundleDebug") {
+    from 'build/intermediates/classes/debug'
+    destinationDir = file('build/fortest')
+    extension = 'jar'
+}
+

@@ -8,19 +8,19 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>/tmp/android_billing_library.log</file>
+        <file>/tmp/android_inapp_lib.log</file>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
         </layout>
     </appender>
 
 
-    <logger name="jp.daneko" level="TRACE">
+    <logger name="com.github" level="TRACE">
         <appender-ref ref="FILE" />
     </logger>
 
 
-    <root level="debug">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
