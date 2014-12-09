@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'me.tatarka:gradle-retrolambda:2.4.0'
+        classpath 'me.tatarka:gradle-retrolambda:2.4.1'
         classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.+'
     }
 }
@@ -58,7 +58,7 @@ android {
             } else {
                 signingConfig = android.signingConfigs.debug
             }
-            runProguard true
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro', 'proguard-assumenosideeffects-rules.pro'
         }
     }

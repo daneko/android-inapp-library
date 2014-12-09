@@ -30,8 +30,8 @@
 -keep class **$$ViewInjector { *; }
 -keepnames class * { @butterknife.InjectView *;}
 
-# retrolamda? https://github.com/evant/gradle-retrolambda/issues/9
--dontwarn java.lang.invoke**
+# retrolambda https://github.com/evant/gradle-retrolambda#proguard
+-dontwarn java.lang.invoke.*
 
 # inapp billing
 -keep class com.android.vending.billing.**

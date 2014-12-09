@@ -4,9 +4,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'me.tatarka:gradle-retrolambda:2.4.0'
+        classpath 'me.tatarka:gradle-retrolambda:2.4.1'
         classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.+'
-        classpath 'com.github.jcandksolutions.gradle:android-unit-test:1.6.2'
     }
 }
 
@@ -30,11 +29,9 @@ android {
     }
 
     compileSdkVersion 21
-    buildToolsVersion "21.1"
+    buildToolsVersion "21.1.1"
 
     defaultConfig {
-        // com.exampleはgoogle play に上げられなかった
-        applicationId "com.github.daneko.android.iab"
         minSdkVersion 15
         targetSdkVersion 21
         versionCode 1
@@ -43,7 +40,7 @@ android {
 
     buildTypes {
         release {
-            runProguard false
+            minifyEnabled false
         }
     }
 
@@ -53,11 +50,9 @@ android {
     }
 }
 
-apply plugin: 'android-unit-test'
-
 dependencies {
 
-    compile 'io.reactivex:rxandroid:0.22.0'
+    compile 'io.reactivex:rxandroid:0.23.0'
 
     compile 'org.functionaljava:functionaljava:4.2-beta-1'
 
@@ -67,24 +62,13 @@ dependencies {
 
     provided 'org.projectlombok:lombok:1.14.8'
 
+    /*
     testCompile 'junit:junit:4.10'
     testCompile 'org.robolectric:robolectric:2.3'
     testCompile 'com.squareup.assertj:assertj-android:1.0.0'
     testCompile 'org.mockito:mockito-all:1.10.8'
     testCompile 'ch.qos.logback:logback-classic:1.1.2'
-}
-
-androidUnitTest {
-    testReleaseBuildType true
-    //Run tests for all the build types including non-debuggable (like the Release build type). Only works for Application projects, not Library projects.
-    downloadDependenciesSources true
-    //Download the sources.jar for the production dependencies. `true` by default.
-    downloadDependenciesJavadoc true
-    //Download the javadoc.jar for the production dependencies. `false` by default.
-    downloadTestDependenciesSources true
-    //Download the sources.jar for the test dependencies. `true` by default.
-    downloadTestDependenciesJavadoc true
-    //Download the javadoc.jar for the test dependencies. `false` by default.
+    */
 }
 
 retrolambda {
