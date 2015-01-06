@@ -25,7 +25,7 @@ import fj.F2;
 import fj.F3;
 import fj.Function;
 import fj.P2;
-import fj.TryCatch1;
+import fj.function.Try1;
 import fj.Unit;
 import fj.data.Java;
 import fj.data.List;
@@ -372,7 +372,7 @@ public final class IabService {
      */
     Observable<Product> findBillingItem(@Nonnull final IInAppBillingService service) {
 
-        TryCatch1<IabItemType, List<Product>, Exception> find = iabType -> {
+        Try1<IabItemType, List<Product>, Exception> find = iabType -> {
             final Bundle querySkus = new Bundle();
             querySkus.putStringArrayList(
                     IabConstant.GetSkuDetailKey.ITEM_LIST.getValue(),

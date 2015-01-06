@@ -18,9 +18,9 @@ dependencies {
 //    compile project(":library")
     compile fileTree(dir: project(":library").file("build/fortest"), include: "*.jar")
 
-    compile 'io.reactivex:rxandroid:0.23.0'
+    compile 'io.reactivex:rxandroid:0.24.0'
 
-    compile 'org.functionaljava:functionaljava:4.2-beta-1'
+    compile 'org.functionaljava:functionaljava:4.2'
 
     compile 'org.slf4j:slf4j-api:1.7.6'
 
