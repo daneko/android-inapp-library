@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'me.tatarka:gradle-retrolambda:2.4.1'
+        classpath 'me.tatarka:gradle-retrolambda:2.5.0'
         classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.+'
     }
 }
@@ -18,7 +18,7 @@ def m2dir = properties.getProperty('upload.dir')
 
 apply plugin: 'android-sdk-manager'
 apply plugin: 'com.android.library'
-apply plugin: 'retrolambda'
+apply plugin: 'me.tatarka.retrolambda'
 apply plugin: 'maven'
 
 
@@ -29,7 +29,7 @@ android {
     }
 
     compileSdkVersion 21
-    buildToolsVersion "21.1.1"
+    buildToolsVersion "21.1.2"
 
     defaultConfig {
         minSdkVersion 15
@@ -39,6 +39,8 @@ android {
     }
 
     buildTypes {
+        spock {}
+
         release {
             minifyEnabled false
         }
@@ -50,15 +52,20 @@ android {
     }
 }
 
+configurations {
+    export_jar
+    compile.extendsFrom export_jar
+}
+
 dependencies {
 
-    compile 'io.reactivex:rxandroid:0.24.0'
+    export_jar 'io.reactivex:rxandroid:0.24.0'
 
-    compile 'org.functionaljava:functionaljava:4.2'
+    export_jar 'org.functionaljava:functionaljava:4.2'
 
-    compile 'org.slf4j:slf4j-api:1.7.6'
+    export_jar 'org.slf4j:slf4j-api:1.7.6'
 
-    compile 'com.google.code.findbugs:jsr305:3.0.0'
+    export_jar 'com.google.code.findbugs:jsr305:3.0.0'
 
     provided 'org.projectlombok:lombok:1.14.8'
 }
@@ -112,8 +119,8 @@ uploadArchives {
     }
 }
 
-task zip2jar(type: Zip, dependsOn: "bundleDebug") {
-    from 'build/intermediates/classes/debug'
+task zip2jar(type: Zip, dependsOn: "bundleSpock") {
+    from 'build/intermediates/classes/spock', configurations.export_jar.collect { it.isDirectory() ? it : zipTree(it) }
     destinationDir = file('build/fortest')
     extension = 'jar'
 }
