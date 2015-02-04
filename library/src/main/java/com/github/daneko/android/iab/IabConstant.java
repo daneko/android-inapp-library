@@ -8,66 +8,28 @@ import fj.data.List;
 
 import lombok.extern.slf4j.Slf4j;
 
+import com.github.daneko.android.iab.model.GooglePlayResponse;
+
 /**
  */
 @Slf4j
 class IabConstant {
     public static final int TARGET_VERSION = 3;
 
-    /**
-     * <a href="https://developer.android.com/google/play/billing/billing_reference.html#billing-codes">参照</a>
-     */
-    public enum GooglePlayResponse {
-        OK(0, "OK"),
-        USER_CANCELED(1, "User Canceled"),
-        BILLING_UNAVAILABLE(3, "Billing Unavailable"),
-        ITEM_UNAVAILABLE(4, "Item Unavailable"),
-        DEVELOPER_ERROR(5, "Developer Error"),
-        ERROR(6, "Error"),
-        ITEM_ALREADY_OWNED(7, "Item Already Owned"),
-        ITEM_NOT_OWNED(8, "Item not owned");
-
-        private final int code;
-        private final String description;
-
-        public int getCode() {
-            return this.code;
+    public static GooglePlayResponse extractResponse(@Nonnull final Bundle bundle) {
+        Object o = bundle.get(IabConstant.BillingServiceConstants.RESPONSE_CODE.getValue());
+        if (o == null) {
+            log.debug("Bundle with null response code, assuming OK (known issue)");
+            return GooglePlayResponse.OK;
+        } else if (o instanceof Integer) {
+            return GooglePlayResponse.create(((Integer) o));
+        } else if (o instanceof Long) {
+            return GooglePlayResponse.create((int) ((Long) o).longValue());
+        } else {
+            final String err = "Unexpected type for bundle response code: " + o.getClass().getName();
+            log.error(err);
+            throw new RuntimeException(err);
         }
-
-        public String getDescription() {
-            return this.description;
-        }
-
-        GooglePlayResponse(final int code, final String description) {
-            this.code = code;
-            this.description = description;
-        }
-
-        public static GooglePlayResponse extractResponse(@Nonnull final Bundle bundle) {
-            Object o = bundle.get(BillingServiceConstants.RESPONSE_CODE.getValue());
-            if (o == null) {
-                log.debug("Bundle with null response code, assuming OK (known issue)");
-                return OK;
-            } else if (o instanceof Integer) {
-                return create(((Integer) o));
-            } else if (o instanceof Long) {
-                return create((int) ((Long) o).longValue());
-            } else {
-                final String err = "Unexpected type for bundle response code: " + o.getClass().getName();
-                log.error(err);
-                throw new RuntimeException(err);
-            }
-        }
-
-        public static GooglePlayResponse create(int value) {
-            for (GooglePlayResponse response : GooglePlayResponse.values()) {
-                if (value == response.getCode()) {
-                    return response;
-                }
-            }
-            throw new IllegalArgumentException(String.format("unknown response code: %d", value));
-        }
-
     }
 
     public enum BillingServiceConstants {

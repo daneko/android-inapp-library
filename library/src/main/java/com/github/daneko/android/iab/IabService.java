@@ -25,13 +25,13 @@ import fj.F2;
 import fj.F3;
 import fj.Function;
 import fj.P2;
-import fj.function.Try1;
 import fj.Unit;
 import fj.data.Java;
 import fj.data.List;
 import fj.data.Option;
 import fj.data.Set;
 import fj.function.Strings;
+import fj.function.Try1;
 
 import rx.Observable;
 import rx.schedulers.Schedulers;
@@ -42,14 +42,17 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import com.github.daneko.android.iab.exception.IabException;
+import com.github.daneko.android.iab.exception.IabResponseException;
 import com.github.daneko.android.iab.model.ActivityResults;
 import com.github.daneko.android.iab.model.BillingType;
+import com.github.daneko.android.iab.model.GooglePlayResponse;
 import com.github.daneko.android.iab.model.IabItemType;
 import com.github.daneko.android.iab.model.Product;
 import com.github.daneko.android.iab.model.ProductBaseInfo;
 import com.github.daneko.android.iab.model.Purchase;
 import com.github.daneko.android.iab.model.SkuDetails;
 
+//@formatter:off
 /**
  * sample
  * <pre>
@@ -65,6 +68,7 @@ import com.github.daneko.android.iab.model.SkuDetails;
  * service.dispose();
  * </pre>
  */
+//@formatter:on
 @Slf4j
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class IabService {
@@ -158,6 +162,7 @@ public final class IabService {
 
     /**
      * @return onNext で 購入成功 / onError で 購入失敗、キャンセル 成功時は購入情報が付与された値が来る
+     * onError RemoteException / {@link com.github.daneko.android.iab.exception.IabException } / {@link com.github.daneko.android.iab.exception.IabResponseException }
      * @throws java.lang.IllegalArgumentException すでに買っている
      */
     public Observable<Product> buyItem(@Nonnull final Product item, final int requestCode) {
@@ -171,7 +176,7 @@ public final class IabService {
                     try {
                         subscriber.onNext(buyRequest(service, item, requestCode));
                         subscriber.onCompleted();
-                    } catch (RemoteException | IabException e) {
+                    } catch (RemoteException | IabException | IabResponseException e) {
                         subscriber.onError(e);
                     }
                 })
@@ -202,7 +207,7 @@ public final class IabService {
                         filter(res -> res.getRequestCode() == requestCode && res.getData().isSome()).
                         first().
                         groupBy(res -> res.getResultCode() == Activity.RESULT_OK
-                                && IabConstant.GooglePlayResponse.extractResponse(res.getData().some().getExtras()) == IabConstant.GooglePlayResponse.OK).
+                                && IabConstant.extractResponse(res.getData().some().getExtras()) == GooglePlayResponse.OK).
                         flatMap(g -> {
                             if (g.getKey()) {
                                 return g.flatMap(successResponseF::f);
@@ -224,7 +229,7 @@ public final class IabService {
     @SneakyThrows(IntentSender.SendIntentException.class)
     Product buyRequest(@Nonnull final IInAppBillingService service,
                        @Nonnull final Product item,
-                       final int requestCode) throws RemoteException, IabException {
+                       final int requestCode) throws RemoteException, IabException, IabResponseException {
         log.trace("start buy item: {}", item);
 
         final Bundle buyIntentBundle = service.getBuyIntent(
@@ -234,11 +239,11 @@ public final class IabService {
                 item.getIabItemType().getTypeName(),
                 item.getDeveloperPayload().toNull());
 
-        final IabConstant.GooglePlayResponse response = IabConstant.GooglePlayResponse.extractResponse(buyIntentBundle);
-        if (response != IabConstant.GooglePlayResponse.OK) {
+        final GooglePlayResponse response = IabConstant.extractResponse(buyIntentBundle);
+        if (response != GooglePlayResponse.OK) {
             final String err = String.format("Unable to buy item, Error code: %s / desc: %s", response.getCode(), response.getDescription());
             log.error(err);
-            throw new IabException(err);
+            throw new IabResponseException(response, err);
         }
 
         final PendingIntent pendingIntent = buyIntentBundle.getParcelable(IabConstant.BillingServiceConstants.BUY_INTENT.getValue());
@@ -288,14 +293,14 @@ public final class IabService {
         return item.withPurchaseInfo(Option.some(purchase));
     }
 
-    IabException buyResponseFailure(@Nonnull final ActivityResults res) {
-        final IabConstant.GooglePlayResponse response =
-                IabConstant.GooglePlayResponse.extractResponse(res.getData().some().getExtras());
+    IabResponseException buyResponseFailure(@Nonnull final ActivityResults res) {
+        final GooglePlayResponse response =
+                IabConstant.extractResponse(res.getData().some().getExtras());
 
         final String err = String.format(
                 "purchase response (onActivityResult) is error. code : %s, desc : %s",
                 response.getCode(), response.getDescription());
-        return new IabException(err);
+        return new IabResponseException(response, err);
     }
 
     /**
@@ -319,7 +324,7 @@ public final class IabService {
                             try {
                                 subscriber.onNext(consumeItem(service, item));
                                 subscriber.onCompleted();
-                            } catch (IabException | RemoteException e) {
+                            } catch ( IabResponseException| RemoteException e) {
                                 subscriber.onError(e);
                             }
                         }
@@ -335,13 +340,15 @@ public final class IabService {
     /**
      * throwしなくてもGooglePlayResponse返せば良い気もするがRemoteExceptionがなぁ…
      */
-    Unit consumeItem(@Nonnull final IInAppBillingService service, @Nonnull final Product item) throws RemoteException, IabException {
-        final IabConstant.GooglePlayResponse response = IabConstant.GooglePlayResponse.create(
+    Unit consumeItem(@Nonnull final IInAppBillingService service, @Nonnull final Product item)
+            throws RemoteException, IabResponseException {
+
+        final GooglePlayResponse response = GooglePlayResponse.create(
                 service.consumePurchase(IabConstant.TARGET_VERSION, packageName, item.getPurchaseInfo().some().getToken()));
-        if (response != IabConstant.GooglePlayResponse.OK) {
+        if (response != GooglePlayResponse.OK) {
             final String err = String.format("consume error: code:%s, desc: %s", response.getCode(), response.getDescription());
             log.error(err);
-            throw new IabException(err);
+            throw new IabResponseException(response, err);
         }
         return Unit.unit();
     }
@@ -390,11 +397,11 @@ public final class IabService {
             log.trace("query Bundle: {}", querySkus);
             log.trace("response Bundle: {}", responseBundle);
 
-            final IabConstant.GooglePlayResponse response = IabConstant.GooglePlayResponse.extractResponse(responseBundle);
+            final GooglePlayResponse response = IabConstant.extractResponse(responseBundle);
 
-            if (response != IabConstant.GooglePlayResponse.OK) {
+            if (response != GooglePlayResponse.OK) {
                 final String err = String.format("getSkuDetails, Error response: c:%d / desc:%s", response.getCode(), response.getDescription());
-                throw new IabException(err);
+                throw new IabResponseException(response, err);
             }
 
             if (!responseBundle.containsKey(IabConstant.BillingServiceConstants.GET_SKU_DETAILS_LIST.getValue())) {
@@ -440,7 +447,7 @@ public final class IabService {
      * {@link com.android.vending.billing.IInAppBillingService#getPurchases(int, String, String, String)}のラッパー
      */
     List<Purchase> findPurchase(@Nonnull final IInAppBillingService service,
-                                @Nonnull final IabItemType itemType) throws RemoteException, IabException {
+                                @Nonnull final IabItemType itemType) throws RemoteException, IabException, IabResponseException {
         return _findPurchase(service, itemType, null, new ArrayList<>());
     }
 
@@ -448,7 +455,7 @@ public final class IabService {
     List<Purchase> _findPurchase(@Nonnull final IInAppBillingService service,
                                  @Nonnull final IabItemType itemType,
                                  final String continuationToken,
-                                 @Nonnull java.util.List<Purchase> acc) throws RemoteException, IabException {
+                                 @Nonnull java.util.List<Purchase> acc) throws RemoteException, IabException, IabResponseException {
 
         final Bundle purchases = service.getPurchases(
                 IabConstant.TARGET_VERSION,
@@ -456,11 +463,11 @@ public final class IabService {
                 itemType.getTypeName(),
                 continuationToken);
 
-        final IabConstant.GooglePlayResponse googlePlayResponse = IabConstant.GooglePlayResponse.extractResponse(purchases);
-        if (googlePlayResponse != IabConstant.GooglePlayResponse.OK) {
+        final GooglePlayResponse googlePlayResponse = IabConstant.extractResponse(purchases);
+        if (googlePlayResponse != GooglePlayResponse.OK) {
             final String err = String.format("Unable to buy item, Error response: c:%d / desc:%s", googlePlayResponse.getCode(), googlePlayResponse.getDescription());
             log.error(err);
-            throw new IabException(err);
+            throw new IabResponseException(googlePlayResponse, err);
         }
         if (!IabConstant.BillingServiceConstants.hasPurchaseKey(purchases)) {
             final String err = "Bundle returned from getPurchases() doesn't contain required fields. purchases: " + purchases;
@@ -537,7 +544,7 @@ public final class IabService {
      * 自分で呼ばなければいけないのはイケてないなぁ…
      */
     public Unit dispose() {
-        for(Activity a : getActivity().toList()){
+        for (Activity a : getActivity().toList()) {
             IabServiceConnection.dispose(a);
         }
         return Unit.unit();

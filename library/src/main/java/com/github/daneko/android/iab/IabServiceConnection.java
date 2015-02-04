@@ -29,6 +29,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import com.github.daneko.android.iab.exception.IabException;
+import com.github.daneko.android.iab.model.GooglePlayResponse;
 import com.github.daneko.android.iab.model.IabItemType;
 
 import static fj.data.Option.none;
@@ -93,8 +94,8 @@ class IabServiceConnection implements ServiceConnection {
 
         final int inappSupported = s.isBillingSupported(IabConstant.TARGET_VERSION, packageName, IabItemType.INAPP.getTypeName());
         final int subsSupported = s.isBillingSupported(IabConstant.TARGET_VERSION, packageName, IabItemType.SUBSCRIPTION.getTypeName());
-        if (inappSupported != IabConstant.GooglePlayResponse.OK.getCode()
-                || subsSupported != IabConstant.GooglePlayResponse.OK.getCode()
+        if (inappSupported != GooglePlayResponse.OK.getCode()
+                || subsSupported != GooglePlayResponse.OK.getCode()
                 ) {
             final String err = String.format("unsupport v3 api. inapp response code:%d / subscription response code:%d", inappSupported, subsSupported);
             log.error(err);
