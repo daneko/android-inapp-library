@@ -18,11 +18,11 @@ import fj.data.Set
 class IabServiceSpec extends RoboSpecification {
 
     static Bundle emptyPurchaseResponse() {
-        return createExpectPurchaseResponse(IabConstant.GooglePlayResponse.OK, new ArrayList<String>(), List.<JSONObject> nil(), new ArrayList<String>(), null)
+        return createExpectPurchaseResponse(GooglePlayResponse.OK, new ArrayList<String>(), List.<JSONObject> nil(), new ArrayList<String>(), null)
     }
 
     static Bundle createExpectPurchaseResponse(
-            final IabConstant.GooglePlayResponse resultCode,
+            final GooglePlayResponse resultCode,
             final ArrayList<String> itemList,
             final List<JSONObject> dataList,
             final ArrayList<String> signatureList,
@@ -44,7 +44,7 @@ class IabServiceSpec extends RoboSpecification {
     }
 
     static Bundle createExpectPurchaseResponse(
-            final IabConstant.GooglePlayResponse resultCode,
+            final GooglePlayResponse resultCode,
             final List<Purchase> expectList,
             final String continuationToken) {
 
@@ -110,7 +110,7 @@ class IabServiceSpec extends RoboSpecification {
 
 
     static Bundle createGetSkuDetailsResult(
-            final IabConstant.GooglePlayResponse resultCode,
+            final GooglePlayResponse resultCode,
             final List<JSONObject> expectedList) {
         final Bundle bundle = new Bundle()
         bundle.putInt("RESPONSE_CODE", resultCode.getCode())
@@ -187,11 +187,11 @@ class IabServiceSpec extends RoboSpecification {
 
         final Bundle inappBundle = new Bundle()
         inappBundle.putStringArrayList("ITEM_ID_LIST", new ArrayList<String>(Arrays.asList(test1._2().getProductId(), test2._2().getProductId())))
-        final Bundle inappResultExpectBundle = createGetSkuDetailsResult(IabConstant.GooglePlayResponse.OK, List.list(test1._2().getJson(), test2._2().getJson()))
+        final Bundle inappResultExpectBundle = createGetSkuDetailsResult(GooglePlayResponse.OK, List.list(test1._2().getJson(), test2._2().getJson()))
 
         final Bundle subsBundle = new Bundle()
         subsBundle.putStringArrayList("ITEM_ID_LIST", new ArrayList<String>(Arrays.asList(test3._2().getProductId())))
-        final Bundle subsResultExpectBundle = createGetSkuDetailsResult(IabConstant.GooglePlayResponse.OK, List.list(test3._2().getJson()))
+        final Bundle subsResultExpectBundle = createGetSkuDetailsResult(GooglePlayResponse.OK, List.list(test3._2().getJson()))
 
         final IInAppBillingService mockService = Mock(IInAppBillingService)
 
@@ -242,11 +242,11 @@ class IabServiceSpec extends RoboSpecification {
 
         final Bundle inappBundle = new Bundle()
         inappBundle.putStringArrayList("ITEM_ID_LIST", new ArrayList<String>(Arrays.asList(test1._2().getProductId(), test2._2().getProductId())))
-        final Bundle inappResultExpectBundle = createGetSkuDetailsResult(IabConstant.GooglePlayResponse.OK, List.list(test1._2().getJson(), test2._2().getJson()))
+        final Bundle inappResultExpectBundle = createGetSkuDetailsResult(GooglePlayResponse.OK, List.list(test1._2().getJson(), test2._2().getJson()))
 
         final Bundle subsBundle = new Bundle()
         subsBundle.putStringArrayList("ITEM_ID_LIST", new ArrayList<String>(Arrays.asList(test3._2().getProductId())))
-        final Bundle subsResultExpectBundle = createGetSkuDetailsResult(IabConstant.GooglePlayResponse.OK, List.list(test3._2().getJson()))
+        final Bundle subsResultExpectBundle = createGetSkuDetailsResult(GooglePlayResponse.OK, List.list(test3._2().getJson()))
 
         final IInAppBillingService mockService = Mock(IInAppBillingService)
 
@@ -261,7 +261,7 @@ class IabServiceSpec extends RoboSpecification {
                 "hogefugapiyo",
                 "signature1")
         final Bundle inappPurchaseResponse = createExpectPurchaseResponse(
-                IabConstant.GooglePlayResponse.OK,
+                GooglePlayResponse.OK,
                 List.list(purchaseData),
                 null)
         final Bundle subsPurchaseResponse = emptyPurchaseResponse()
@@ -319,11 +319,11 @@ class IabServiceSpec extends RoboSpecification {
 
         final Bundle inappBundle = new Bundle()
         inappBundle.putStringArrayList("ITEM_ID_LIST", new ArrayList<String>(Arrays.asList(test1._2().getProductId(), test2._2().getProductId())))
-        final Bundle inappResultExpectBundle = createGetSkuDetailsResult(IabConstant.GooglePlayResponse.OK, List.list(test1._2().getJson(), test2._2().getJson()))
+        final Bundle inappResultExpectBundle = createGetSkuDetailsResult(GooglePlayResponse.OK, List.list(test1._2().getJson(), test2._2().getJson()))
 
         final Bundle subsBundle = new Bundle()
         subsBundle.putStringArrayList("ITEM_ID_LIST", new ArrayList<String>(Arrays.asList(test3._2().getProductId())))
-        final Bundle subsResultExpectBundle = createGetSkuDetailsResult(IabConstant.GooglePlayResponse.OK, List.list(test3._2().getJson()))
+        final Bundle subsResultExpectBundle = createGetSkuDetailsResult(GooglePlayResponse.OK, List.list(test3._2().getJson()))
 
         final IInAppBillingService mockService = Mock(IInAppBillingService)
 
@@ -341,7 +341,7 @@ class IabServiceSpec extends RoboSpecification {
                 "signature1")
 
         final Bundle inappPurchaseResponse = createExpectPurchaseResponse(
-                IabConstant.GooglePlayResponse.OK,
+                GooglePlayResponse.OK,
                 List.list(purchaseData1),
                 continuation)
 
@@ -353,7 +353,7 @@ class IabServiceSpec extends RoboSpecification {
                 "aaaabbbbcccc",
                 "signature2")
         final Bundle inappPurchaseResponse2 = createExpectPurchaseResponse(
-                IabConstant.GooglePlayResponse.OK,
+                GooglePlayResponse.OK,
                 List.list(purchaseData2),
                 null)
         final Bundle subsPurchaseResponse = emptyPurchaseResponse()

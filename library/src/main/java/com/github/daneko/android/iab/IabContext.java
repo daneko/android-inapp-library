@@ -2,7 +2,7 @@ package com.github.daneko.android.iab;
 
 import android.app.Activity;
 
-import rx.subjects.PublishSubject;
+import rx.Observable;
 
 import com.github.daneko.android.iab.model.ActivityResults;
 
@@ -13,5 +13,5 @@ import com.github.daneko.android.iab.model.ActivityResults;
 public interface IabContext {
     Activity getActivity();
 
-    PublishSubject<ActivityResults> getPublishSubject();
+    Observable<ActivityResults> getActivityResultObservable();
 }

@@ -95,7 +95,7 @@ public final class IabService {
         return new Builder(
                 context.getActivity().getApplicationContext().getPackageName(),
                 new WeakReference<Activity>(context.getActivity()),
-                context.getPublishSubject().asObservable(),
+                context.getActivityResultObservable(),
                 base64PublicKey,
                 productIds
         );
@@ -324,7 +324,7 @@ public final class IabService {
                             try {
                                 subscriber.onNext(consumeItem(service, item));
                                 subscriber.onCompleted();
-                            } catch ( IabResponseException| RemoteException e) {
+                            } catch (IabResponseException | RemoteException e) {
                                 subscriber.onError(e);
                             }
                         }

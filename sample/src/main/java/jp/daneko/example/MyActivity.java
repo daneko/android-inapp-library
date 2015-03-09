@@ -8,12 +8,13 @@ import android.view.MenuItem;
 
 import fj.data.Option;
 
+import rx.Observable;
 import rx.subjects.PublishSubject;
 
 import lombok.Getter;
 
-import com.github.daneko.android.iab.model.ActivityResults;
 import com.github.daneko.android.iab.IabContext;
+import com.github.daneko.android.iab.model.ActivityResults;
 
 public class MyActivity extends Activity implements IabContext {
 
@@ -63,7 +64,8 @@ public class MyActivity extends Activity implements IabContext {
     }
 
     @Override
-    public PublishSubject<ActivityResults> getPublishSubject() {
-        return getResultsPublish();
+    public Observable<ActivityResults> getActivityResultObservable() {
+        return getResultsPublish().asObservable();
     }
+
 }
