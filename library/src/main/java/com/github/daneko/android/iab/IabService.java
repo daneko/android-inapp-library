@@ -380,13 +380,18 @@ public final class IabService {
     Observable<Product> findBillingItem(@Nonnull final IInAppBillingService service) {
 
         Try1<IabItemType, List<Product>, Exception> find = iabType -> {
+            final ArrayList<String> productIdRawList = Java.<String>List_ArrayList()
+                    .f(productIdList.filter(p -> p.getType().getIabItemType() == iabType)
+                            .map(ProductBaseInfo::getId));
+            if(productIdRawList.isEmpty()){
+                return List.list();
+            }
+
             final Bundle querySkus = new Bundle();
             querySkus.putStringArrayList(
                     IabConstant.GetSkuDetailKey.ITEM_LIST.getValue(),
-                    Java.<String>List_ArrayList().f(
-                            productIdList.
-                                    filter(p -> p.getType().getIabItemType() == iabType).
-                                    map(ProductBaseInfo::getId)));
+                    productIdRawList
+            );
 
             final Bundle responseBundle = service.getSkuDetails(
                     IabConstant.TARGET_VERSION,
@@ -400,7 +405,16 @@ public final class IabService {
             final GooglePlayResponse response = IabConstant.extractResponse(responseBundle);
 
             if (response != GooglePlayResponse.OK) {
-                final String err = String.format("getSkuDetails, Error response: c:%d / desc:%s", response.getCode(), response.getDescription());
+                final String err = String.format("getSkuDetails\n" +
+                                "Error response: c:%d / desc:%s\n" +
+                                "iab type %s\n" +
+                                "query Bundle %s\n" +
+                                "response Bundle %s\n",
+                        response.getCode(),
+                        response.getDescription(),
+                        iabType,
+                        querySkus,
+                        responseBundle);
                 throw new IabResponseException(response, err);
             }
 
@@ -457,11 +471,15 @@ public final class IabService {
                                  final String continuationToken,
                                  @Nonnull java.util.List<Purchase> acc) throws RemoteException, IabException, IabResponseException {
 
+        log.trace("#findPurchase");
+
         final Bundle purchases = service.getPurchases(
                 IabConstant.TARGET_VERSION,
                 packageName,
                 itemType.getTypeName(),
                 continuationToken);
+
+        log.trace("purchases is {}", purchases);
 
         final GooglePlayResponse googlePlayResponse = IabConstant.extractResponse(purchases);
         if (googlePlayResponse != GooglePlayResponse.OK) {
