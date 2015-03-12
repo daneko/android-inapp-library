@@ -19,8 +19,8 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    compileSdkVersion 21
-    buildToolsVersion "21.1.2"
+    compileSdkVersion 22
+    buildToolsVersion "22"
 
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
@@ -34,7 +34,7 @@ android {
         // com.exampleはgoogle play に上げられなかった
         applicationId "jp.daneko.example"
         minSdkVersion 15
-        targetSdkVersion 21
+        targetSdkVersion 22
         versionCode 4
         versionName "0.1 alpha"
         buildConfigField "String", "PUBLIC_KEY", "\"$publicKey\""
