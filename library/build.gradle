@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'me.tatarka:gradle-retrolambda:2.5.0'
+        classpath 'me.tatarka:gradle-retrolambda:3.1.0'
         classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.+'
     }
 }
@@ -29,7 +29,7 @@ android {
     }
 
     compileSdkVersion 22
-    buildToolsVersion "22"
+    buildToolsVersion "22.0.1"
 
     defaultConfig {
         minSdkVersion 15
@@ -75,6 +75,8 @@ retrolambda {
     jdk j8Home ?: System.getenv("JAVA8_HOME")
     oldJdk j7Home ?: System.getenv("JAVA7_HOME")
     javaVersion JavaVersion.VERSION_1_7
+    defaultMethods true
+    incremental false
     //jvmArgs '-arg1', '-arg2'
 }
 

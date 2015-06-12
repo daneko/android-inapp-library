@@ -13,9 +13,7 @@ import com.android.vending.billing.IInAppBillingService;
 
 import javax.annotation.Nonnull;
 
-import fj.F;
-import fj.F1Functions;
-import fj.P1;
+import fj.F0;
 import fj.Unit;
 import fj.data.Option;
 
@@ -49,7 +47,7 @@ class IabServiceConnection implements ServiceConnection {
     private String packageName;
 
     public static IabServiceConnection getConnection(@Nonnull final Activity activity) {
-        final F<Unit, P1<IabServiceConnection>> connectionFactory = F1Functions.lazy(u -> {
+        final F0<IabServiceConnection> connectionFactory = (() -> {
             IabServiceConnection connection = new IabServiceConnection();
             Intent serviceIntent = new Intent(IAB_BIND);
             serviceIntent.setPackage(IAB_PACKAGE);
@@ -67,7 +65,7 @@ class IabServiceConnection implements ServiceConnection {
         log.trace("call get Connection");
 
         return Option.fromNull(connectionCache.get(activity))
-                .orSome(connectionFactory.f(Unit.unit()));
+                .orSome(connectionFactory);
     }
 
     private final ReplaySubject<IInAppBillingService> serviceSubject;
