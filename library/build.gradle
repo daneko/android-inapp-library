@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'me.tatarka:gradle-retrolambda:3.1.0'
+        classpath 'me.tatarka:gradle-retrolambda:3.2.0'
         classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.+'
     }
 }
@@ -61,7 +61,7 @@ dependencies {
 
     export_jar 'io.reactivex:rxandroid:0.24.0'
 
-    export_jar 'org.functionaljava:functionaljava:4.4-SNAPSHOT'
+    export_jar 'org.functionaljava:functionaljava:4.4'
 
     export_jar 'org.slf4j:slf4j-api:1.7.6'
 
