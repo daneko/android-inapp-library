@@ -84,7 +84,7 @@ dependencies {
 
     compile 'com.jakewharton:butterknife:5.1.2'
 
-    provided 'org.projectlombok:lombok:1.16.2'
+    provided 'org.projectlombok:lombok:1.16.4'
 
     compile fileTree(dir: 'libs', include: ['*.jar'])
 }

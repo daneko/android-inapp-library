@@ -59,7 +59,7 @@ configurations {
 
 dependencies {
 
-    export_jar 'io.reactivex:rxandroid:0.24.0'
+    export_jar 'io.reactivex:rxandroid:0.25.0'
 
     export_jar 'org.functionaljava:functionaljava:4.4'
 
@@ -67,7 +67,7 @@ dependencies {
 
     export_jar 'com.google.code.findbugs:jsr305:3.0.0'
 
-    provided 'org.projectlombok:lombok:1.16.2'
+    provided 'org.projectlombok:lombok:1.16.4'
 }
 
 retrolambda {
