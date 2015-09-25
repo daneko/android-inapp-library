@@ -9,9 +9,9 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.LruCache;
 
-import com.android.vending.billing.IInAppBillingService;
+import android.support.annotation.NonNull;
 
-import javax.annotation.Nonnull;
+import com.android.vending.billing.IInAppBillingService;
 
 import fj.F0;
 import fj.Unit;
@@ -46,7 +46,7 @@ class IabServiceConnection implements ServiceConnection {
     @Setter(value = AccessLevel.PRIVATE)
     private String packageName;
 
-    public static IabServiceConnection getConnection(@Nonnull final Activity activity) {
+    public static IabServiceConnection getConnection(@NonNull final Activity activity) {
         final F0<IabServiceConnection> connectionFactory = (() -> {
             IabServiceConnection connection = new IabServiceConnection();
             Intent serviceIntent = new Intent(IAB_BIND);
@@ -116,7 +116,7 @@ class IabServiceConnection implements ServiceConnection {
         return billingService.isSome();
     }
 
-    public static Unit dispose(@Nonnull final Activity activity) {
+    public static Unit dispose(@NonNull final Activity activity) {
         Option.fromNull(connectionCache.remove(activity)).map(c -> {
             log.trace("unbind from {}", activity);
             activity.unbindService(c);

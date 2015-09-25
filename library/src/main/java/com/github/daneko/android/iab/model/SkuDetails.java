@@ -1,8 +1,8 @@
 package com.github.daneko.android.iab.model;
 
-import org.json.JSONObject;
+import android.support.annotation.NonNull;
 
-import javax.annotation.Nonnull;
+import org.json.JSONObject;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,7 +23,7 @@ public class SkuDetails {
     String description;
     JSONObject json;
 
-    public static SkuDetails create(@Nonnull final JSONObject jsonSkuDetails) {
+    public static SkuDetails create(@NonNull final JSONObject jsonSkuDetails) {
 
         return new SkuDetails(
                 jsonSkuDetails.optString("productId"),

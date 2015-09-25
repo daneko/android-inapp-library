@@ -1,6 +1,6 @@
 package com.github.daneko.android.iab.model;
 
-import javax.annotation.Nonnull;
+import android.support.annotation.NonNull;
 
 /**
  */
@@ -23,7 +23,7 @@ public enum BillingType {
         return getIabItemType(this);
     }
 
-    static IabItemType getIabItemType(@Nonnull final BillingType type) {
+    static IabItemType getIabItemType(@NonNull final BillingType type) {
         switch (type) {
             case MANAGE:
             case CONSUMPTION:

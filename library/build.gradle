@@ -1,26 +1,7 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
 
-    dependencies {
-        classpath 'me.tatarka:gradle-retrolambda:3.2.0'
-        classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.+'
-    }
-}
-
-// local.properties
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-def j8Home = properties.getProperty('java8_home')
-def j7Home = properties.getProperty('java7_home')
-def m2dir = properties.getProperty('upload.dir')
-
-apply plugin: 'android-sdk-manager'
 apply plugin: 'com.android.library'
 apply plugin: 'me.tatarka.retrolambda'
 apply plugin: 'maven'
-
 
 android {
     compileOptions {
@@ -28,19 +9,17 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    compileSdkVersion 22
-    buildToolsVersion "22.0.1"
+    compileSdkVersion versions.compileSdk
+    buildToolsVersion versions.buildTools
 
     defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 22
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion versions.minSdk
+        targetSdkVersion versions.compileSdk
+        versionCode 2
+        versionName "0.2.0"
     }
 
     buildTypes {
-        spock {}
-
         release {
             minifyEnabled false
         }
@@ -52,28 +31,19 @@ android {
     }
 }
 
-configurations {
-    export_jar
-    compile.extendsFrom export_jar
-}
-
 dependencies {
 
-    export_jar 'io.reactivex:rxandroid:0.25.0'
+    compile 'io.reactivex:rxandroid:0.25.0'
+    compile "org.functionaljava:functionaljava:${versions.fj}"
+    compile 'org.slf4j:slf4j-api:1.7.6'
+    compile "com.android.support:support-annotations:${versions.supportLib}"
 
-    export_jar 'org.functionaljava:functionaljava:4.4'
-
-    export_jar 'org.slf4j:slf4j-api:1.7.6'
-
-    export_jar 'com.google.code.findbugs:jsr305:3.0.0'
-
-    provided 'org.projectlombok:lombok:1.16.4'
+    provided "org.projectlombok:lombok:${versions.lombok}"
 }
 
 retrolambda {
-
-    jdk j8Home ?: System.getenv("JAVA8_HOME")
-    oldJdk j7Home ?: System.getenv("JAVA7_HOME")
+    jdk env.j8Home
+    oldJdk env.j7Home
     javaVersion JavaVersion.VERSION_1_7
     defaultMethods true
     incremental false
@@ -92,13 +62,11 @@ artifacts {
     archives androidSourcesJar
 }
 
-def repoPath = m2dir ?: "/tmp"
-
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: uri("${repoPath}/repository"))
-            pom.version = '0.0.1-SNAPSHOT'
+            repository(url: uri("${env.m2dir}/repository"))
+            pom.version = '0.2.0-SNAPSHOT'
             pom.groupId = 'com.github.daneko'
             pom.artifactId = 'android-inapp-library'
             pom.project {
@@ -120,10 +88,3 @@ uploadArchives {
         }
     }
 }
-
-task zip2jar(type: Zip, dependsOn: "bundleSpock") {
-    from 'build/intermediates/classes/spock', configurations.export_jar.collect { it.isDirectory() ? it : zipTree(it) }
-    destinationDir = file('build/fortest')
-    extension = 'jar'
-}
-

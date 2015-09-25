@@ -1,8 +1,8 @@
 package com.github.daneko.android.iab.model;
 
-import org.json.JSONObject;
+import android.support.annotation.NonNull;
 
-import javax.annotation.Nonnull;
+import org.json.JSONObject;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -29,7 +29,7 @@ public class Purchase {
     JSONObject originalJson;
     String signature;
 
-    public static Purchase create(@Nonnull JSONObject jsonPurchaseInfo, @Nonnull String signature) {
+    public static Purchase create(@NonNull JSONObject jsonPurchaseInfo, @NonNull String signature) {
         return new Purchase(
                 jsonPurchaseInfo.optString("orderId"),
                 jsonPurchaseInfo.optString("packageName"),

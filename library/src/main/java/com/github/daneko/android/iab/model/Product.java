@@ -1,7 +1,5 @@
 package com.github.daneko.android.iab.model;
 
-import javax.annotation.Nonnull;
-
 import fj.data.Option;
 
 import lombok.AccessLevel;
@@ -10,6 +8,8 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.Value;
 import lombok.experimental.Wither;
+
+import android.support.annotation.NonNull;
 
 /**
  *
@@ -27,7 +27,7 @@ public class Product {
     @Wither
     Option<String> developerPayload;
 
-    public static Product create(@Nonnull final ProductBaseInfo productInfo, @Nonnull final SkuDetails skuDetails) {
+    public static Product create(@NonNull final ProductBaseInfo productInfo, @NonNull final SkuDetails skuDetails) {
         return new Product(productInfo, skuDetails, Option.none(), Option.none());
     }
 

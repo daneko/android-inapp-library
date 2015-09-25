@@ -2,7 +2,7 @@ package com.github.daneko.android.iab;
 
 import android.os.Bundle;
 
-import javax.annotation.Nonnull;
+import android.support.annotation.NonNull;
 
 import fj.data.List;
 
@@ -16,7 +16,7 @@ import com.github.daneko.android.iab.model.GooglePlayResponse;
 class IabConstant {
     public static final int TARGET_VERSION = 3;
 
-    public static GooglePlayResponse extractResponse(@Nonnull final Bundle bundle) {
+    public static GooglePlayResponse extractResponse(@NonNull final Bundle bundle) {
         Object o = bundle.get(IabConstant.BillingServiceConstants.RESPONSE_CODE.getValue());
         if (o == null) {
             log.debug("Bundle with null response code, assuming OK (known issue)");
@@ -53,7 +53,7 @@ class IabConstant {
             this.value = value;
         }
 
-        public static boolean hasPurchaseKey(@Nonnull Bundle bundle) {
+        public static boolean hasPurchaseKey(@NonNull Bundle bundle) {
 
             return List.list(INAPP_ITEM_LIST, INAPP_PURCHASE_DATA_LIST, INAPP_SIGNATURE_LIST).
                     forall(value ->

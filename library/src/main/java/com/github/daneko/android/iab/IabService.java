@@ -9,6 +9,8 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.RemoteException;
 
+import android.support.annotation.NonNull;
+
 import com.android.vending.billing.IInAppBillingService;
 import com.example.android.trivialdrivesample.util.Security;
 
@@ -18,7 +20,6 @@ import org.json.JSONObject;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-import javax.annotation.Nonnull;
 
 import fj.F;
 import fj.F2;
@@ -87,9 +88,9 @@ public final class IabService {
      * @param productIds      sku list
      */
     public static Builder builder(
-            @Nonnull final IabContext context,
-            @Nonnull final String base64PublicKey,
-            @Nonnull final Set<ProductBaseInfo> productIds
+            @NonNull final IabContext context,
+            @NonNull final String base64PublicKey,
+            @NonNull final Set<ProductBaseInfo> productIds
     ) {
 
         return new Builder(
@@ -110,11 +111,11 @@ public final class IabService {
         private final Set<ProductBaseInfo> productIds;
 
         Builder(
-                @Nonnull final String packageName,
-                @Nonnull final WeakReference<Activity> weakContext,
-                @Nonnull final Observable<ActivityResults> activityResultsObservable,
-                @Nonnull final String base64PublicKey,
-                @Nonnull final Set<ProductBaseInfo> productIds
+                @NonNull final String packageName,
+                @NonNull final WeakReference<Activity> weakContext,
+                @NonNull final Observable<ActivityResults> activityResultsObservable,
+                @NonNull final String base64PublicKey,
+                @NonNull final Set<ProductBaseInfo> productIds
         ) {
             this.packageName = packageName;
             this.weakContext = weakContext;
@@ -146,7 +147,7 @@ public final class IabService {
             return this;
         }
 
-        public Builder packageName(@Nonnull final String customPackageName) {
+        public Builder packageName(@NonNull final String customPackageName) {
             packageName = customPackageName;
             return this;
         }
@@ -165,7 +166,7 @@ public final class IabService {
      * onError RemoteException / {@link com.github.daneko.android.iab.exception.IabException } / {@link com.github.daneko.android.iab.exception.IabResponseException }
      * @throws java.lang.IllegalArgumentException すでに買っている
      */
-    public Observable<Product> buyItem(@Nonnull final Product item, final int requestCode) {
+    public Observable<Product> buyItem(@NonNull final Product item, final int requestCode) {
         if (item.getPurchaseInfo().isSome()) {
             log.trace("has purchase info {}", item.getPurchaseInfo());
             throw new IllegalArgumentException("item was purchased.");
@@ -227,8 +228,8 @@ public final class IabService {
     }
 
     @SneakyThrows(IntentSender.SendIntentException.class)
-    Product buyRequest(@Nonnull final IInAppBillingService service,
-                       @Nonnull final Product item,
+    Product buyRequest(@NonNull final IInAppBillingService service,
+                       @NonNull final Product item,
                        final int requestCode) throws RemoteException, IabException, IabResponseException {
         log.trace("start buy item: {}", item);
 
@@ -267,8 +268,8 @@ public final class IabService {
      * @param item resにItemTypeがないので… とりあえず購入しようとしたものを渡す
      */
     @SneakyThrows(JSONException.class)
-    Product buyResponseSuccess(@Nonnull final ActivityResults res,
-                               @Nonnull final Product item) throws IabException {
+    Product buyResponseSuccess(@NonNull final ActivityResults res,
+                               @NonNull final Product item) throws IabException {
         final Intent data = res.getData().some();
         final String purchaseData = data.getStringExtra(IabConstant.BillingServiceConstants.INAPP_PURCHASE_DATA.getValue());
         final String dataSignature = data.getStringExtra(IabConstant.BillingServiceConstants.INAPP_SIGNATURE.getValue());
@@ -293,7 +294,7 @@ public final class IabService {
         return item.withPurchaseInfo(Option.some(purchase));
     }
 
-    IabResponseException buyResponseFailure(@Nonnull final ActivityResults res) {
+    IabResponseException buyResponseFailure(@NonNull final ActivityResults res) {
         final GooglePlayResponse response =
                 IabConstant.extractResponse(res.getData().some().getExtras());
 
@@ -310,7 +311,7 @@ public final class IabService {
      *
      * @throws java.lang.IllegalArgumentException 消費アイテムじゃない or 買ってない
      */
-    public Observable<Unit> consumeItem(@Nonnull final Product item) {
+    public Observable<Unit> consumeItem(@NonNull final Product item) {
         if (item.getBillingType() != BillingType.CONSUMPTION) {
             throw new IllegalArgumentException(String.format("item type is not consumption [%s]", item));
         }
@@ -340,7 +341,7 @@ public final class IabService {
     /**
      * throwしなくてもGooglePlayResponse返せば良い気もするがRemoteExceptionがなぁ…
      */
-    Unit consumeItem(@Nonnull final IInAppBillingService service, @Nonnull final Product item)
+    Unit consumeItem(@NonNull final IInAppBillingService service, @NonNull final Product item)
             throws RemoteException, IabResponseException {
 
         final GooglePlayResponse response = GooglePlayResponse.create(
@@ -377,7 +378,7 @@ public final class IabService {
      * <p>
      * call onError type: IabException | JSONException | RemoteException e
      */
-    Observable<Product> findBillingItem(@Nonnull final IInAppBillingService service) {
+    Observable<Product> findBillingItem(@NonNull final IInAppBillingService service) {
 
         Try1<IabItemType, List<Product>, Exception> find = iabType -> {
             final ArrayList<String> productIdRawList = Java.<String>List_ArrayList()
@@ -449,7 +450,7 @@ public final class IabService {
     }
 
     @SneakyThrows(JSONException.class)
-    Product skuDetailJsonParse(@Nonnull final String json) {
+    Product skuDetailJsonParse(@NonNull final String json) {
         final SkuDetails skuDetails = SkuDetails.create(new JSONObject(json));
         final ProductBaseInfo productBaseInfo = productIdList.find(p -> p.getId().equals(skuDetails.getProductId())).some();
         log.trace("sku detail json {}", json);
@@ -460,16 +461,16 @@ public final class IabService {
      * 購入済み情報を返すよ
      * {@link com.android.vending.billing.IInAppBillingService#getPurchases(int, String, String, String)}のラッパー
      */
-    List<Purchase> findPurchase(@Nonnull final IInAppBillingService service,
-                                @Nonnull final IabItemType itemType) throws RemoteException, IabException, IabResponseException {
+    List<Purchase> findPurchase(@NonNull final IInAppBillingService service,
+                                @NonNull final IabItemType itemType) throws RemoteException, IabException, IabResponseException {
         return _findPurchase(service, itemType, null, new ArrayList<>());
     }
 
     @SneakyThrows(JSONException.class)
-    List<Purchase> _findPurchase(@Nonnull final IInAppBillingService service,
-                                 @Nonnull final IabItemType itemType,
+    List<Purchase> _findPurchase(@NonNull final IInAppBillingService service,
+                                 @NonNull final IabItemType itemType,
                                  final String continuationToken,
-                                 @Nonnull java.util.List<Purchase> acc) throws RemoteException, IabException, IabResponseException {
+                                 @NonNull java.util.List<Purchase> acc) throws RemoteException, IabException, IabResponseException {
 
         log.trace("#findPurchase");
 
@@ -550,7 +551,7 @@ public final class IabService {
     /**
      * そもそもMainThreadで動かすことないだろうから…
      */
-    Observable<IInAppBillingService> getServiceObservable(@Nonnull final Activity activity) {
+    Observable<IInAppBillingService> getServiceObservable(@NonNull final Activity activity) {
         return IabServiceConnection.
                 getConnection(activity).
                 getServiceObservable().

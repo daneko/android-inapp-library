@@ -1,6 +1,6 @@
 package com.github.daneko.android.iab.model;
 
-import javax.annotation.Nonnull;
+import android.support.annotation.NonNull;
 
 public enum IabItemType {
     INAPP("inapp"),
@@ -12,7 +12,7 @@ public enum IabItemType {
         return this.typeName;
     }
 
-    IabItemType(@Nonnull final String typeName) {
+    IabItemType(@NonNull final String typeName) {
         this.typeName = typeName;
     }
 }
