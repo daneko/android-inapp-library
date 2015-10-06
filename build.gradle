@@ -9,6 +9,7 @@ ext {
             play_service : '7.8.0',
             lombok       : '1.16.4',
             fj           : '4.4',
+            rx           : '1.0.14',
     ]
 
     // local.propertiesのloadl
