@@ -18,7 +18,7 @@ import fj.Unit;
 import fj.data.Option;
 
 import rx.Observable;
-import rx.subjects.ReplaySubject;
+import rx.subjects.BehaviorSubject;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,15 +30,12 @@ import com.github.daneko.android.iab.exception.IabException;
 import com.github.daneko.android.iab.model.GooglePlayResponse;
 import com.github.daneko.android.iab.model.IabItemType;
 
-import static fj.data.Option.none;
-
 /**
  */
 @Slf4j
 class IabServiceConnection implements ServiceConnection {
 
-    private static LruCache<Activity, IabServiceConnection> connectionCache =
-            new LruCache<Activity, IabServiceConnection>(1024);
+    private static LruCache<Activity, IabServiceConnection> connectionCache = new LruCache<>(16);
 
     private static final String IAB_BIND = "com.android.vending.billing.InAppBillingService.BIND";
     private static final String IAB_PACKAGE = "com.android.vending";
@@ -64,18 +61,15 @@ class IabServiceConnection implements ServiceConnection {
 
         log.trace("call get Connection");
 
-        return Option.fromNull(connectionCache.get(activity))
-                .orSome(connectionFactory);
+        return Option.fromNull(connectionCache.get(activity)).orSome(connectionFactory);
     }
 
-    private final ReplaySubject<IInAppBillingService> serviceSubject;
+    private final BehaviorSubject<IInAppBillingService> serviceSubject;
     @Getter
     private final Observable<IInAppBillingService> serviceObservable;
-    private Option<IInAppBillingService> billingService;
 
     private IabServiceConnection() {
-        billingService = none();
-        serviceSubject = ReplaySubject.<IInAppBillingService>create();
+        serviceSubject = BehaviorSubject.create();
         serviceObservable = serviceSubject.asObservable();
     }
 
@@ -90,17 +84,19 @@ class IabServiceConnection implements ServiceConnection {
 
         final IInAppBillingService s = IInAppBillingService.Stub.asInterface(service);
 
-        final int inappSupported = s.isBillingSupported(IabConstant.TARGET_VERSION, packageName, IabItemType.INAPP.getTypeName());
-        final int subsSupported = s.isBillingSupported(IabConstant.TARGET_VERSION, packageName, IabItemType.SUBSCRIPTION.getTypeName());
-        if (inappSupported != GooglePlayResponse.OK.getCode()
-                || subsSupported != GooglePlayResponse.OK.getCode()
-                ) {
-            final String err = String.format("unsupport v3 api. inapp response code:%d / subscription response code:%d", inappSupported, subsSupported);
+        final GooglePlayResponse inappSupported = GooglePlayResponse.create(
+                s.isBillingSupported(IabConstant.TARGET_VERSION, packageName, IabItemType.INAPP.getTypeName()));
+        final GooglePlayResponse subsSupported = GooglePlayResponse.create(
+                s.isBillingSupported(IabConstant.TARGET_VERSION, packageName, IabItemType.SUBSCRIPTION.getTypeName()));
+
+        if (inappSupported != GooglePlayResponse.OK || subsSupported != GooglePlayResponse.OK) {
+            final String err = String.format("unsupported v3 api. inapp response %s / subscription response %s",
+                    inappSupported.getDescription(), subsSupported.getDescription());
             log.error(err);
             serviceSubject.onError(new IabException(err));
             return;
         }
-        billingService = Option.some(s);
+
         serviceSubject.onNext(s);
     }
 
@@ -108,15 +104,9 @@ class IabServiceConnection implements ServiceConnection {
     public void onServiceDisconnected(ComponentName name) {
         log.trace("service disconnected.");
         serviceSubject.onCompleted();
-        billingService = none();
     }
 
-    public boolean isConnected() {
-        log.trace("check connection");
-        return billingService.isSome();
-    }
-
-    public static Unit dispose(@NonNull final Activity activity) {
+    public static Unit dispose(final Activity activity) {
         Option.fromNull(connectionCache.remove(activity)).map(c -> {
             log.trace("unbind from {}", activity);
             activity.unbindService(c);

@@ -18,19 +18,24 @@ import org.json.JSONObject;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-
+import fj.Effect;
 import fj.F;
 import fj.F2;
 import fj.F3;
 import fj.Function;
 import fj.P2;
+import fj.Try;
+import fj.TryEffect;
 import fj.Unit;
 import fj.data.Java;
 import fj.data.List;
 import fj.data.Option;
 import fj.data.Set;
+import fj.data.Validation;
 import fj.function.Strings;
+import fj.function.Try0;
 import fj.function.Try1;
+import fj.function.TryEffect1;
 
 import rx.Observable;
 import rx.schedulers.Schedulers;
@@ -171,16 +176,8 @@ public final class IabService {
             throw new IllegalStateException("item was purchased.");
         }
 
-        final F<IInAppBillingService, Observable<Product>> purchaseRequestF = (service ->
-                Observable.create((Observable.OnSubscribe<Product>) subscriber -> {
-                    try {
-                        subscriber.onNext(buyRequest(service, item, requestCode));
-                        subscriber.onCompleted();
-                    } catch (RemoteException | IabException | IabResponseException e) {
-                        subscriber.onError(e);
-                    }
-                })
-        );
+        final F<IInAppBillingService, Observable<Product>> purchaseRequestF =
+                service -> buyRequest(service, item, requestCode);
 
         final F<ActivityResults, Observable<Product>> successResponseF = (res ->
                 Observable.create((Observable.OnSubscribe<Product>) subscriber -> {
@@ -226,39 +223,59 @@ public final class IabService {
         ).some();
     }
 
-    @SneakyThrows(IntentSender.SendIntentException.class)
-    Product buyRequest(@NonNull final IInAppBillingService service,
-                       @NonNull final Product item,
-                       final int requestCode) throws RemoteException, IabException, IabResponseException {
-        log.trace("start buy item: {}", item);
+    Validation<Exception, PendingIntent> generateBuyRequestIntent(
+            final IInAppBillingService service,
+            final Product item) {
 
-        final Bundle buyIntentBundle = service.getBuyIntent(
+        final Try0<Bundle, Exception> extractBundle = () -> service.getBuyIntent(
                 IabConstant.TARGET_VERSION,
                 packageName,
                 item.getProductId(),
                 item.getIabItemType().getTypeName(),
                 item.getDeveloperPayload().toNull());
 
-        final GooglePlayResponse response = IabConstant.extractResponse(buyIntentBundle);
-        if (response != GooglePlayResponse.OK) {
-            final String err = String.format("Unable to buy item, Error code: %s / desc: %s", response.getCode(), response.getDescription());
-            log.error(err);
-            throw new IabResponseException(response, err);
-        }
+        final F<Bundle, Validation<Exception, PendingIntent>> extractPendingIntent = buyIntent -> {
+            final GooglePlayResponse response = IabConstant.extractResponse(buyIntent);
+            return Option.<PendingIntent>iif(response.isSuccess(),
+                    buyIntent.getParcelable(IabConstant.BillingServiceConstants.BUY_INTENT.getValue()))
+                    .toValidation(new IabResponseException(response,
+                            String.format("Unable to buy item, Error code: %s / desc: %s",
+                                    response.getCode(), response.getDescription())));
+        };
 
-        final PendingIntent pendingIntent = buyIntentBundle.getParcelable(IabConstant.BillingServiceConstants.BUY_INTENT.getValue());
-        log.trace("Launching buy intent Request code: " + requestCode);
-        for (Activity activity : getActivity().toList()) {
-            activity.startIntentSenderForResult(pendingIntent.getIntentSender(),
-                    requestCode,
-                    new Intent(),
-                    0,
-                    0,
-                    0);
-            return item;
-        }
-        throw new IabException("activity has gone ???");
+        return Try.f(extractBundle).f().bind(extractPendingIntent::f);
+    }
 
+    /**
+     * onError type : IntentSender.SendIntentException, RemoteException, IabException, IabResponseException
+     */
+    Observable<Product> buyRequest(final IInAppBillingService service,
+                                   final Product item,
+                                   final int requestCode) {
+
+        final F<Activity, TryEffect1<IntentSender, Exception>> startBuyIntent =
+                a -> sender -> a.startIntentSenderForResult(sender,
+                        requestCode,
+                        new Intent(),
+                        0,
+                        0,
+                        0);
+
+        return Observable.create((Observable.OnSubscribe<Product>) subs -> {
+                    final Validation<Exception, Activity> extractActivity =
+                            getActivity().toValidation(new IabException("activity has gone ???"));
+
+                    generateBuyRequestIntent(service, item).map(PendingIntent::getIntentSender)
+                            .bind(intentSender -> extractActivity.map(startBuyIntent)
+                                    .bind(f -> TryEffect.f(f).f(intentSender)))
+                            .validation(
+                                    e -> Effect.f(subs::onError).f(e),
+                                    unit -> Effect.f(subs::onNext).f(item)
+                            );
+                    subs.onCompleted();
+                }
+
+        );
     }
 
     /**
