@@ -2,8 +2,6 @@ package com.github.daneko.android.iab;
 
 import android.os.Bundle;
 
-import android.support.annotation.NonNull;
-
 import fj.data.List;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +14,8 @@ import com.github.daneko.android.iab.model.GooglePlayResponse;
 class IabConstant {
     public static final int TARGET_VERSION = 3;
 
-    public static GooglePlayResponse extractResponse(@NonNull final Bundle bundle) {
-        Object o = bundle.get(IabConstant.BillingServiceConstants.RESPONSE_CODE.getValue());
+    public static GooglePlayResponse extractResponse(final Bundle bundle) {
+        final Object o = bundle.get(IabConstant.BillingServiceConstants.RESPONSE_CODE.getValue());
         if (o == null) {
             log.debug("Bundle with null response code, assuming OK (known issue)");
             return GooglePlayResponse.OK;
@@ -53,12 +51,9 @@ class IabConstant {
             this.value = value;
         }
 
-        public static boolean hasPurchaseKey(@NonNull Bundle bundle) {
-
-            return List.list(INAPP_ITEM_LIST, INAPP_PURCHASE_DATA_LIST, INAPP_SIGNATURE_LIST).
-                    forall(value ->
-                                    bundle.containsKey(value.getValue())
-                    );
+        public static boolean hasPurchaseKey(final Bundle bundle) {
+            return List.list(INAPP_ITEM_LIST, INAPP_PURCHASE_DATA_LIST, INAPP_SIGNATURE_LIST)
+                    .forall(value -> bundle.containsKey(value.getValue()));
         }
 
     }
@@ -80,5 +75,4 @@ class IabConstant {
             this.value = value;
         }
     }
-
 }

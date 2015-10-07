@@ -1,6 +1,5 @@
 package com.github.daneko.android.iab.model;
 
-import android.support.annotation.NonNull;
 
 import org.json.JSONObject;
 
@@ -10,10 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Value;
 
 /**
- * <a href="https://developer.android.com/google/play/billing/billing_overview.html#console">ここに</a>skuってこんなのって言っているけど
- * productIdでいいんじゃないか感
- * <p>
- * 購入情報
+ * base on com.example.android.trivialdrivesample.util.Purchase
  */
 @Value
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
@@ -29,7 +25,7 @@ public class Purchase {
     JSONObject originalJson;
     String signature;
 
-    public static Purchase create(@NonNull JSONObject jsonPurchaseInfo, @NonNull String signature) {
+    public static Purchase create(final JSONObject jsonPurchaseInfo, final String signature) {
         return new Purchase(
                 jsonPurchaseInfo.optString("orderId"),
                 jsonPurchaseInfo.optString("packageName"),
@@ -49,5 +45,4 @@ public class Purchase {
     public String getProductId() {
         return sku;
     }
-
 }

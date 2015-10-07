@@ -9,8 +9,6 @@ import lombok.ToString;
 import lombok.Value;
 import lombok.experimental.Wither;
 
-import android.support.annotation.NonNull;
-
 /**
  *
  */
@@ -27,7 +25,7 @@ public class Product {
     @Wither
     Option<String> developerPayload;
 
-    public static Product create(@NonNull final ProductBaseInfo productInfo, @NonNull final SkuDetails skuDetails) {
+    public static Product create(final ProductBaseInfo productInfo, final SkuDetails skuDetails) {
         return new Product(productInfo, skuDetails, Option.none(), Option.none());
     }
 
@@ -44,7 +42,7 @@ public class Product {
         return purchaseInfo.isNone();
     }
 
-    public boolean canConsume(){
+    public boolean canConsume() {
         return getBillingType() == BillingType.CONSUMPTION && purchaseInfo.isSome();
     }
 }

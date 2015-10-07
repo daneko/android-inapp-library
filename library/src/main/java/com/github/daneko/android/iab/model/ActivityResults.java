@@ -8,7 +8,7 @@ import fj.data.Option;
 import lombok.Value;
 
 /**
- * {@link android.app.Activity#onActivityResult(int, int, android.content.Intent)} のパラメータをまとめたもの
+ * {@link android.app.Activity#onActivityResult(int, int, android.content.Intent)} 's param object
  */
 @Value(staticConstructor = "of")
 public class ActivityResults {

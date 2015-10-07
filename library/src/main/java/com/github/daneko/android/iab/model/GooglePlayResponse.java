@@ -1,7 +1,7 @@
 package com.github.daneko.android.iab.model;
 
 /**
- * <a href="https://developer.android.com/google/play/billing/billing_reference.html#billing-codes">参照</a>
+ * @see <a href="https://developer.android.com/google/play/billing/billing_reference.html#billing-codes">reference/a>
  */
 public enum GooglePlayResponse {
     OK(0, "OK"),
@@ -22,6 +22,10 @@ public enum GooglePlayResponse {
 
     public String getDescription() {
         return this.description;
+    }
+
+    public boolean isSuccess() {
+        return this == OK;
     }
 
     GooglePlayResponse(final int code, final String description) {
