@@ -167,19 +167,18 @@ public final class IabService {
 
     /**
      * @return onNext で 購入成功 / onError で 購入失敗、キャンセル 成功時は購入情報が付与された値が来る
-     * onError RemoteException / {@link com.github.daneko.android.iab.exception.IabException } / {@link com.github.daneko.android.iab.exception.IabResponseException }
-     * @throws java.lang.IllegalStateException already purchase
+     * onError IllegalStateException / RemoteException / {@link com.github.daneko.android.iab.exception.IabException } / {@link com.github.daneko.android.iab.exception.IabResponseException }
      */
     public Observable<Product> buyItem(final Product item, final int requestCode) {
         if (item.getPurchaseInfo().isSome()) {
             log.trace("has purchase info {}", item.getPurchaseInfo());
-            throw new IllegalStateException("item was purchased.");
+            return Observable.error(new IllegalStateException("item was purchased."));
         }
 
         final F<IInAppBillingService, Observable<Product>> purchaseRequestF =
                 service -> buyRequest(service, item, requestCode);
 
-        final F<ActivityResults, Observable<Product>> successResponseF = (res ->
+        final F<ActivityResults, Observable<Product>> successResponseF = res ->
                 Observable.create((Observable.OnSubscribe<Product>) subscriber -> {
                     try {
                         subscriber.onNext(buyResponseSuccess(res, item));
@@ -187,40 +186,26 @@ public final class IabService {
                     } catch (IabException e) {
                         subscriber.onError(e);
                     }
-                })
-        );
+                });
 
-        final F<ActivityResults, Observable<Product>> errorResponseF = (res ->
-                Observable.create((Observable.OnSubscribe<Product>) subscriber ->
-                                subscriber.onError(buyResponseFailure(res))
-                )
-        );
+        final F<ActivityResults, Observable<Product>> errorResponseF = res -> Observable.error(buyResponseFailure(res));
 
-        // RxJava的には程々のところでcacheしてObservableを分割するんじゃないかな？
-        // groupBy が Map<Key, Observable> じゃないのはなぜなのか
-        // onActivityResult を受け取った最初の値を見る
-        final Observable<Product> responseObservable =
-                activityResultsObservable.
-                        filter(res -> res.getRequestCode() == requestCode && res.getData().isSome()).
-                        first().
-                        groupBy(res -> res.getResultCode() == Activity.RESULT_OK
-                                && IabConstant.extractResponse(res.getData().some().getExtras()) == GooglePlayResponse.OK).
-                        flatMap(g -> {
-                            if (g.getKey()) {
-                                return g.flatMap(successResponseF::f);
-                            }
-                            return g.flatMap(errorResponseF::f);
-                        });
+        final Observable<Product> responseObservable = activityResultsObservable
+                .filter(res -> res.getRequestCode() == requestCode && res.getData().isSome())
+                .first()
+                .groupBy(res -> res.getResultCode() == Activity.RESULT_OK
+                        && res.getData().map(Intent::getExtras).map(IabConstant::extractResponse)
+                        .exists(r -> r == GooglePlayResponse.OK))
+                .flatMap(g -> g.flatMap(Option.iif(g.getKey(), successResponseF).orSome(errorResponseF)::f));
 
         /**
          * 成功時は購入情報のみが付与されているはず…
          */
-        return getActivity().map(c ->
-                        getServiceObservable(c).
-                                flatMap(purchaseRequestF::f).
-                                mergeWith(responseObservable).
-                                filter(i -> i.getPurchaseInfo().isSome())
-        ).some();
+        return Observable.from(getActivity())
+                .flatMap(this::getServiceObservable)
+                .flatMap(purchaseRequestF::f)
+                .mergeWith(responseObservable)
+                .filter(i -> i.getPurchaseInfo().isSome());
     }
 
     Validation<Exception, PendingIntent> generateBuyRequestIntent(
