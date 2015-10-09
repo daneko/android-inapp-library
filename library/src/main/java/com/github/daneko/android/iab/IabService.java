@@ -308,17 +308,17 @@ public final class IabService {
     /**
      * 購入したアイテムを消費する
      * onNext で成功 onErrorで失敗
-     * call onError type: IabException | RemoteException e
-     *
-     * @throws java.lang.IllegalArgumentException 消費アイテムじゃない or 買ってない
+     * call onError type: IabException | RemoteException | IllegalArgumentException e
      */
     public Observable<Unit> consumeItem(final Product item) {
         if (item.getBillingType() != BillingType.CONSUMPTION) {
-            throw new IllegalArgumentException(String.format("item type is not consumption [%s]", item));
+            return Observable
+                    .error(new IllegalArgumentException(String.format("item type is not consumption [%s]", item)));
         }
 
+        // TODO: move to #consumeItem
         if (item.getPurchaseInfo().isNone()) {
-            throw new IllegalArgumentException("item is not purchase info");
+            return Observable.error(new IllegalArgumentException("item is not purchase info"));
         }
 
         final F<IInAppBillingService, Observable<Unit>> f = (service ->
@@ -333,10 +333,9 @@ public final class IabService {
                 )
         );
 
-        return getActivity().map(context ->
-                        getServiceObservable(context).
-                                flatMap(f::f)
-        ).some();
+        return Observable.from(getActivity())
+                .flatMap(this::getServiceObservable)
+                .flatMap(f::f);
     }
 
     /**
