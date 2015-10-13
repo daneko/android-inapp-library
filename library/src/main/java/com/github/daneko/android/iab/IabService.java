@@ -38,6 +38,7 @@ import fj.function.Try1;
 import fj.function.TryEffect1;
 
 import rx.Observable;
+import rx.Observer;
 import rx.schedulers.Schedulers;
 
 import lombok.AccessLevel;
@@ -166,7 +167,6 @@ public final class IabService {
     }
 
     /**
-     * @return onNext で 購入成功 / onError で 購入失敗、キャンセル 成功時は購入情報が付与された値が来る
      * onError IllegalStateException / RemoteException / {@link com.github.daneko.android.iab.exception.IabException } / {@link com.github.daneko.android.iab.exception.IabResponseException }
      */
     public Observable<Product> buyItem(final Product item, final int requestCode) {
@@ -179,14 +179,7 @@ public final class IabService {
                 service -> buyRequest(service, item, requestCode);
 
         final F<ActivityResults, Observable<Product>> successResponseF = res ->
-                Observable.create((Observable.OnSubscribe<Product>) subscriber -> {
-                    try {
-                        subscriber.onNext(buyResponseSuccess(res, item));
-                        subscriber.onCompleted();
-                    } catch (IabException e) {
-                        subscriber.onError(e);
-                    }
-                });
+                validationToObservable(buyResponseSuccess(res, item));
 
         final F<ActivityResults, Observable<Product>> errorResponseF = res -> Observable.error(buyResponseFailure(res));
 
@@ -246,53 +239,40 @@ public final class IabService {
                         0,
                         0);
 
-        return Observable.create((Observable.OnSubscribe<Product>) subs -> {
-                    final Validation<Exception, Activity> extractActivity =
-                            getActivity().toValidation(new IabException("activity has gone ???"));
+        final Validation<Exception, Activity> extractActivity =
+                getActivity().toValidation(new IabException("activity has gone ???"));
 
-                    generateBuyRequestIntent(service, item).map(PendingIntent::getIntentSender)
-                            .bind(intentSender -> extractActivity.map(startBuyIntent)
-                                    .bind(f -> TryEffect.f(f).f(intentSender)))
-                            .validation(
-                                    e -> Effect.f(subs::onError).f(e),
-                                    unit -> Effect.f(subs::onNext).f(item)
-                            );
-                    subs.onCompleted();
-                }
-
-        );
+        return validationToObservable(generateBuyRequestIntent(service, item).map(PendingIntent::getIntentSender)
+                .bind(intentSender -> extractActivity.map(startBuyIntent)
+                        .bind(f -> TryEffect.f(f).f(intentSender))))
+                .map(unit -> item);
     }
 
-    /**
-     * 戻り値に購入したItemを入れるかどうか…
-     *
-     * @param item resにItemTypeがないので… とりあえず購入しようとしたものを渡す
-     */
-    @SneakyThrows(JSONException.class)
-    Product buyResponseSuccess(final ActivityResults res,
-                               final Product item) throws IabException {
-        final Intent data = res.getData().some();
-        final String purchaseData = data.getStringExtra(IabConstant.BillingServiceConstants.INAPP_PURCHASE_DATA.getValue());
-        final String dataSignature = data.getStringExtra(IabConstant.BillingServiceConstants.INAPP_SIGNATURE.getValue());
+    Validation<Exception, Product> buyResponseSuccess(final ActivityResults res, final Product item) {
 
-        if (purchaseData == null || dataSignature == null) {
-            final String err = String.format("BUG: either purchaseData or dataSignature is null.\n" +
-                    "  purchase %s" +
-                    "  dataSignature %s" +
-                    "  extras %s", purchaseData, dataSignature, data.getExtras().toString());
-            log.error(err);
-            throw new IabException(err);
-        }
+        final Validation<String, String> purchaseDatas = res.getData().bind(data -> Option.fromNull(
+                data.getStringExtra(IabConstant.BillingServiceConstants.INAPP_PURCHASE_DATA.getValue())))
+                .toValidation("Bug: purchaseData is null");
 
-        final Purchase purchase = Purchase.create(new JSONObject(purchaseData), dataSignature);
+        final Validation<String, String> dataSignatures = res.getData().bind(data -> Option.fromNull(
+                data.getStringExtra(IabConstant.BillingServiceConstants.INAPP_SIGNATURE.getValue())))
+                .toValidation("Bug: dataSignature is null");
 
-        if (!verifyPurchaseLogic.f(purchaseData, dataSignature)) {
-            final String err = String.format("item verify error, purchase:[%s]", purchase.toString());
-            log.error(err);
-            throw new IabException(err);
-        }
+        final F2<String, String, Validation<Exception, Purchase>> purchaseFactory = (purchaseData, dataSignature) -> {
+            try {
+                return Validation.condition(verifyPurchaseLogic.f(purchaseData, dataSignature),
+                        new IabException("item verify error, purchase:x" + purchaseData + " signature: " + dataSignature),
+                        Purchase.create(new JSONObject(purchaseData), dataSignature)
+                );
+            } catch (JSONException e) {
+                return Validation.fail(e);
+            }
+        };
 
-        return item.withPurchaseInfo(Option.some(purchase));
+        return purchaseDatas.accumulate(dataSignatures, purchaseFactory)
+                .f().map(eList -> new IabException(eList.foldLeft((a, b) -> a + "\n" + b, "")))
+                .validation(e -> Validation.fail((Exception) e), Function.identity())
+                .map(purchase -> item.withPurchaseInfo(Option.some(purchase)));
     }
 
     IabResponseException buyResponseFailure(final ActivityResults res) {
@@ -306,8 +286,6 @@ public final class IabService {
     }
 
     /**
-     * 購入したアイテムを消費する
-     * onNext で成功 onErrorで失敗
      * call onError type: IabException | RemoteException | IllegalArgumentException e
      */
     public Observable<Unit> consumeItem(final Product item) {
@@ -562,5 +540,17 @@ public final class IabService {
     public final Unit dispose() {
         return getActivity().map(IabServiceConnection::dispose).orSome(Unit.unit());
     }
-}
 
+    static <E extends Throwable, A> Observable<A> validationToObservable(Validation<E, A> validation) {
+        final F2<Observer<? super A>, A, Unit> onSuccess = (subs, value) -> {
+            subs.onNext(value);
+            subs.onCompleted();
+            return Unit.unit();
+        };
+
+        return Observable.defer(() -> Observable.create((Observable.OnSubscribe<A>) subs -> validation.validation(
+                        Effect.f(subs::onError),
+                        s -> onSuccess.f(subs, s)))
+        );
+    }
+}
