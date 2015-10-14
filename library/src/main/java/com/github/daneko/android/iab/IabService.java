@@ -286,7 +286,7 @@ public final class IabService {
     }
 
     /**
-     * call onError type: IabException | RemoteException | IllegalArgumentException e
+     * call onError type: IabException | RemoteException | IllegalArgumentException
      */
     public Observable<Unit> consumeItem(final Product item) {
         if (item.getBillingType() != BillingType.CONSUMPTION) {
@@ -294,22 +294,8 @@ public final class IabService {
                     .error(new IllegalArgumentException(String.format("item type is not consumption [%s]", item)));
         }
 
-        // TODO: move to #consumeItem
-        if (item.getPurchaseInfo().isNone()) {
-            return Observable.error(new IllegalArgumentException("item is not purchase info"));
-        }
-
-        final F<IInAppBillingService, Observable<Unit>> f = (service ->
-                Observable.create((Observable.OnSubscribe<Unit>) subscriber -> {
-                            try {
-                                subscriber.onNext(consumeItem(service, item));
-                                subscriber.onCompleted();
-                            } catch (IabResponseException | RemoteException e) {
-                                subscriber.onError(e);
-                            }
-                        }
-                )
-        );
+        final F<IInAppBillingService, Observable<Unit>> f =
+                service -> validationToObservable(consumeItem(service, item));
 
         return Observable.from(getActivity())
                 .flatMap(this::getServiceObservable)
@@ -317,19 +303,27 @@ public final class IabService {
     }
 
     /**
-     * throwしなくてもGooglePlayResponse返せば良い気もするがRemoteExceptionがなぁ…
      */
-    Unit consumeItem(final IInAppBillingService service, final Product item)
-            throws RemoteException, IabResponseException {
+    Validation<Exception, Unit> consumeItem(final IInAppBillingService service, final Product item) {
 
-        final GooglePlayResponse response = GooglePlayResponse.create(
-                service.consumePurchase(IabConstant.TARGET_VERSION, packageName, item.getPurchaseInfo().some().getToken()));
-        if (response != GooglePlayResponse.OK) {
+        final F<GooglePlayResponse, Exception> failF = response -> {
             final String err = String.format("consume error: code:%s, desc: %s", response.getCode(), response.getDescription());
             log.error(err);
-            throw new IabResponseException(response, err);
+            return new IabResponseException(response, err);
+        };
+
+        try {
+            return Validation.condition(item.getPurchaseInfo().isSome(),
+                    (Exception) new IllegalArgumentException("item is not purchase info"),
+                    GooglePlayResponse.create(service.consumePurchase(
+                            IabConstant.TARGET_VERSION, packageName, item.getPurchaseInfo().some().getToken())))
+                    .bind(response -> Validation.condition(response.isSuccess(),
+                                    failF.f(response),
+                                    Unit.unit())
+                    );
+        } catch (RemoteException e) {
+            return Validation.fail(e);
         }
-        return Unit.unit();
     }
 
 
