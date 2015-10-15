@@ -34,7 +34,6 @@ import fj.data.Set;
 import fj.data.Validation;
 import fj.function.Strings;
 import fj.function.Try0;
-import fj.function.Try1;
 import fj.function.TryEffect1;
 
 import rx.Observable;
@@ -334,83 +333,83 @@ public final class IabService {
      */
     public Observable<Product> findBillingItem() {
         log.trace("#findBillingItem");
-        if (getActivity().isNone()) {
-            // throw Runtime かどうか…
-            return Observable.create((Observable.OnSubscribe<Product>) s -> s.onError(new IabException("context reference is clear")));
-        }
-
-        return getActivity().map(context ->
-                        getServiceObservable(context).
-                                flatMap(this::findBillingItem)
-        ).some();
+        return Observable.from(getActivity())
+                .flatMap(this::getServiceObservable)
+                .flatMap(this::findBillingItem);
     }
 
     /**
-     * {@link com.android.vending.billing.IInAppBillingService#getSkuDetails(int, String, String, android.os.Bundle)} のラッパー
+     * wrapper {@link com.android.vending.billing.IInAppBillingService#getSkuDetails(int, String, String, android.os.Bundle)}
      * <p>
      * call onError type: IabException | JSONException | RemoteException e
+     * TODO: refactor
      */
     Observable<Product> findBillingItem(final IInAppBillingService service) {
 
-        Try1<IabItemType, List<Product>, Exception> find = iabType -> {
-            final ArrayList<String> productIdRawList = Java.<String>List_ArrayList()
-                    .f(productIdList.filter(p -> p.getType().getIabItemType() == iabType)
-                            .map(ProductBaseInfo::getId));
-            if (productIdRawList.isEmpty()) {
-                return List.list();
+        final F<IabItemType, Validation<Exception, List<Product>>> find = iabType -> {
+            final List<String> productIds = productIdList
+                    .filter(p -> p.getType().getIabItemType() == iabType)
+                    .map(ProductBaseInfo::getId);
+            if (productIds.isEmpty()) {
+                return Validation.success(List.list());
             }
 
             final Bundle querySkus = new Bundle();
             querySkus.putStringArrayList(
                     IabConstant.GetSkuDetailKey.ITEM_LIST.getValue(),
-                    productIdRawList
+                    Java.<String>List_ArrayList().f(productIds)
             );
 
-            final Bundle responseBundle = service.getSkuDetails(
-                    IabConstant.TARGET_VERSION,
-                    packageName,
-                    iabType.getTypeName(),
-                    querySkus);
-
             log.trace("query Bundle: {}", querySkus);
-            log.trace("response Bundle: {}", responseBundle);
 
-            final GooglePlayResponse response = IabConstant.extractResponse(responseBundle);
+            try {
+                final Bundle responseBundle = service.getSkuDetails(
+                        IabConstant.TARGET_VERSION,
+                        packageName,
+                        iabType.getTypeName(),
+                        querySkus);
 
-            if (response != GooglePlayResponse.OK) {
-                final String err = String.format("getSkuDetails\n" +
-                                "Error response: c:%d / desc:%s\n" +
-                                "iab type %s\n" +
-                                "query Bundle %s\n" +
-                                "response Bundle %s\n",
-                        response.getCode(),
-                        response.getDescription(),
-                        iabType,
-                        querySkus,
-                        responseBundle);
-                throw new IabResponseException(response, err);
+                log.trace("response Bundle: {}", responseBundle);
+
+                final GooglePlayResponse response = IabConstant.extractResponse(responseBundle);
+
+                if (!response.isSuccess()) {
+                    final String err = String.format("getSkuDetails\n" +
+                                    "Error response: c:%d / desc:%s\n" +
+                                    "iab type %s\n" +
+                                    "query Bundle %s\n" +
+                                    "response Bundle %s\n",
+                            response.getCode(),
+                            response.getDescription(),
+                            iabType,
+                            querySkus,
+                            responseBundle);
+                    return Validation.fail(new IabResponseException(response, err));
+                }
+
+                if (!responseBundle.containsKey(IabConstant.BillingServiceConstants.GET_SKU_DETAILS_LIST.getValue())) {
+                    final String err = "getSkuDetails, No detail list";
+                    return Validation.fail(new IabException(err));
+                }
+
+                return Validation.success(List.list(responseBundle
+                                .getStringArrayList(IabConstant.BillingServiceConstants.GET_SKU_DETAILS_LIST.getValue())
+                ).map(this::skuDetailJsonParse));
+            } catch (RemoteException e) {
+                return Validation.fail(e);
             }
-
-            if (!responseBundle.containsKey(IabConstant.BillingServiceConstants.GET_SKU_DETAILS_LIST.getValue())) {
-                final String err = "getSkuDetails, No detail list";
-                throw new IabException(err);
-            }
-
-            return List.iterableList(
-                    responseBundle.getStringArrayList(IabConstant.BillingServiceConstants.GET_SKU_DETAILS_LIST.getValue())
-            ).map(this::skuDetailJsonParse);
         };
-
-        // TODO 多分もうちょっとどうにかすればObservableでなくListで返せる気がする…
-        // List.list(IabItemType.values()).map(Try.f(find)::f);
 
         return Observable.create((Observable.OnSubscribe<Product>) s -> {
             for (IabItemType iabType : IabItemType.values()) {
                 try {
                     final List<Purchase> purchases = findPurchase(service, iabType);
-                    find.f(iabType).foreach(billingItem -> {
-                        final Option<Purchase> purchase = purchases.find(p -> p.getProductId().equals(billingItem.getProductId()));
-                        s.onNext(billingItem.withPurchaseInfo(purchase));
+                    find.f(iabType).validation(Effect.f(s::onError), products -> {
+                        for (Product product : products) {
+                            final Option<Purchase> purchase =
+                                    purchases.find(p -> p.getProductId().equals(product.getProductId()));
+                            s.onNext(product.withPurchaseInfo(purchase));
+                        }
                         return Unit.unit();
                     });
                 } catch (Exception e) {
@@ -455,13 +454,15 @@ public final class IabService {
         log.trace("purchases is {}", purchases);
 
         final GooglePlayResponse googlePlayResponse = IabConstant.extractResponse(purchases);
-        if (googlePlayResponse != GooglePlayResponse.OK) {
-            final String err = String.format("Unable to buy item, Error response: c:%d / desc:%s", googlePlayResponse.getCode(), googlePlayResponse.getDescription());
+        if (!googlePlayResponse.isSuccess()) {
+            final String err = String.format("Unable to buy item, Error response: c:%d / desc:%s",
+                    googlePlayResponse.getCode(), googlePlayResponse.getDescription());
             log.error(err);
             throw new IabResponseException(googlePlayResponse, err);
         }
         if (!IabConstant.BillingServiceConstants.hasPurchaseKey(purchases)) {
-            final String err = "Bundle returned from getPurchases() doesn't contain required fields. purchases: " + purchases;
+            final String err = "Bundle returned from getPurchases() doesn't contain required fields. " +
+                    "purchases: " + purchases;
             log.error(err);
             throw new IabException(err);
         }
@@ -500,10 +501,7 @@ public final class IabService {
             Purchase purchase = Purchase.create(new JSONObject(purchaseData), signature);
 
             if (!Strings.isNotNullOrEmpty.f(purchase.getToken())) {
-                final String err = String.format(
-                        "BUG: empty/null token!" +
-                                "Purchase data: %s",
-                        purchaseData);
+                final String err = String.format("BUG: empty/null token! Purchase data: %s", purchaseData);
                 log.error(err);
                 throw new IabException(err);
             }
@@ -511,7 +509,9 @@ public final class IabService {
             acc.add(purchase);
         }
 
-        final String nextContinueToken = purchases.getString(IabConstant.BillingServiceConstants.INAPP_CONTINUATION_TOKEN.getValue());
+        final String nextContinueToken = purchases
+                .getString(IabConstant.BillingServiceConstants.INAPP_CONTINUATION_TOKEN.getValue());
+
         if (Strings.isNotNullOrEmpty.f(nextContinueToken)) {
             log.trace("has continuation token : {}", nextContinueToken);
             return _findPurchase(service, itemType, nextContinueToken, acc);
