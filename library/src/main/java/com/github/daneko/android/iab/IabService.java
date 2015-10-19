@@ -257,16 +257,8 @@ public final class IabService {
                 data.getStringExtra(IabConstant.BillingServiceConstants.INAPP_SIGNATURE.getValue())))
                 .toValidation("Bug: dataSignature is null");
 
-        final F2<String, String, Validation<Exception, Purchase>> purchaseFactory = (purchaseData, dataSignature) -> {
-            try {
-                return Validation.condition(verifyPurchaseLogic.f(purchaseData, dataSignature),
-                        new IabException("item verify error, purchase:x" + purchaseData + " signature: " + dataSignature),
-                        Purchase.create(new JSONObject(purchaseData), dataSignature)
-                );
-            } catch (JSONException e) {
-                return Validation.fail(e);
-            }
-        };
+        final F2<String, String, Validation<Exception, Purchase>> purchaseFactory = (purchaseData, dataSignature) ->
+                purchaseFactory(purchaseData, dataSignature, verifyPurchaseLogic);
 
         return purchaseDatas.accumulate(dataSignatures, purchaseFactory)
                 .f().map(eList -> new IabException(eList.foldLeft((a, b) -> a + "\n" + b, "")))
@@ -467,11 +459,11 @@ public final class IabService {
             throw new IabException(err);
         }
 
-        List<String> ownedSkus = List.iterableList(purchases.getStringArrayList(
+        List<String> ownedSkus = List.list(purchases.getStringArrayList(
                 IabConstant.BillingServiceConstants.INAPP_ITEM_LIST.getValue()));
-        List<String> purchaseDataList = List.iterableList(purchases.getStringArrayList(
+        List<String> purchaseDataList = List.list(purchases.getStringArrayList(
                 IabConstant.BillingServiceConstants.INAPP_PURCHASE_DATA_LIST.getValue()));
-        List<String> signatureList = List.iterableList(purchases.getStringArrayList(
+        List<String> signatureList = List.list(purchases.getStringArrayList(
                 IabConstant.BillingServiceConstants.INAPP_SIGNATURE_LIST.getValue()));
 
         log.trace("item type {}", itemType.getTypeName());
@@ -480,6 +472,9 @@ public final class IabService {
         log.trace("purchaseDataList {}", purchaseDataList.toString());
         log.trace("signatureList {}", signatureList.toString());
 
+        final F2<String, String, Validation<Exception, Purchase>> f = (p, s) ->
+                purchaseFactory(p, s, verifyPurchaseLogic);
+
         // P3<A,B,C>にする方法ないかなぁ…
         // List#foreachを使用してlambda使うとtry/catchを中で書く必要性が発生するのでforで…
         for (P2<String, Integer> purchaseDataWithIndex : purchaseDataList.zipIndex()) {
@@ -487,26 +482,10 @@ public final class IabService {
             final Integer index = purchaseDataWithIndex._2();
             final String signature = signatureList.index(index);
             final String sku = ownedSkus.index(index);
-
-            if (!verifyPurchaseLogic.f(purchaseData, signature)) {
-                final String err = String.format(
-                        "Purchase signature verification **FAILED**. Not adding item.\n" +
-                                "   Purchase data: %s" +
-                                "   Signature: %s"
-                        , purchaseData, signature);
-                throw new IabException(err);
-            }
-
             log.trace("Sku is owned: " + sku);
-            Purchase purchase = Purchase.create(new JSONObject(purchaseData), signature);
 
-            if (!Strings.isNotNullOrEmpty.f(purchase.getToken())) {
-                final String err = String.format("BUG: empty/null token! Purchase data: %s", purchaseData);
-                log.error(err);
-                throw new IabException(err);
-            }
-
-            acc.add(purchase);
+            // TODO: deliver error
+            f.f(purchaseData, signature).foreachDoEffect(acc::add);
         }
 
         final String nextContinueToken = purchases
@@ -547,4 +526,25 @@ public final class IabService {
                         s -> onSuccess.f(subs, s)))
         );
     }
+
+    static Validation<Exception, Purchase> purchaseFactory(final String purchaseData,
+                                                           final String dataSignature,
+                                                           final F2<String, String, Boolean> verifyPurchaseLogic) {
+        final F<Purchase, Validation<Exception, Purchase>> purchaseTokenCheck = purchase ->
+                Validation.condition(Strings.isNotNullOrEmpty.f(purchase.getToken()),
+                        new IabException(String.format("BUG: empty/null token! Purchase data: %s", purchaseData)),
+                        purchase);
+        try {
+            return Validation.condition(verifyPurchaseLogic.f(purchaseData, dataSignature),
+                    (Exception) new IabException(
+                            "item verify error, purchase:x" + purchaseData + " signature: " + dataSignature),
+                    Purchase.create(new JSONObject(purchaseData), dataSignature)
+            ).bind(purchaseTokenCheck);
+
+        } catch (JSONException e) {
+            return Validation.fail(e);
+        }
+    }
+
+    ;
 }
