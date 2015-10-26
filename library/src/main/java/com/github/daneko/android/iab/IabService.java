@@ -23,7 +23,8 @@ import fj.F;
 import fj.F2;
 import fj.F3;
 import fj.Function;
-import fj.P2;
+import fj.P;
+import fj.P3;
 import fj.Try;
 import fj.TryEffect;
 import fj.Unit;
@@ -429,7 +430,6 @@ public final class IabService {
         return _findPurchase(service, itemType, null, new ArrayList<>());
     }
 
-    @SneakyThrows(JSONException.class)
     List<Purchase> _findPurchase(final IInAppBillingService service,
                                  final IabItemType itemType,
                                  final String continuationToken,
@@ -459,34 +459,13 @@ public final class IabService {
             throw new IabException(err);
         }
 
-        List<String> ownedSkus = List.list(purchases.getStringArrayList(
-                IabConstant.BillingServiceConstants.INAPP_ITEM_LIST.getValue()));
-        List<String> purchaseDataList = List.list(purchases.getStringArrayList(
-                IabConstant.BillingServiceConstants.INAPP_PURCHASE_DATA_LIST.getValue()));
-        List<String> signatureList = List.list(purchases.getStringArrayList(
-                IabConstant.BillingServiceConstants.INAPP_SIGNATURE_LIST.getValue()));
-
         log.trace("item type {}", itemType.getTypeName());
-        log.trace("purchases {}", purchases.toString());
-        log.trace("ownedSkus {}", ownedSkus.toString());
-        log.trace("purchaseDataList {}", purchaseDataList.toString());
-        log.trace("signatureList {}", signatureList.toString());
 
         final F2<String, String, Validation<Exception, Purchase>> f = (p, s) ->
                 purchaseFactory(p, s, verifyPurchaseLogic);
 
-        // P3<A,B,C>にする方法ないかなぁ…
-        // List#foreachを使用してlambda使うとtry/catchを中で書く必要性が発生するのでforで…
-        for (P2<String, Integer> purchaseDataWithIndex : purchaseDataList.zipIndex()) {
-            final String purchaseData = purchaseDataWithIndex._1();
-            final Integer index = purchaseDataWithIndex._2();
-            final String signature = signatureList.index(index);
-            final String sku = ownedSkus.index(index);
-            log.trace("Sku is owned: " + sku);
-
-            // TODO: deliver error
-            f.f(purchaseData, signature).foreachDoEffect(acc::add);
-        }
+        extractPurchaseBundle(purchases)
+                .foreachDoEffect(res -> f.f(res._1(), res._2()).foreachDoEffect(acc::add));
 
         final String nextContinueToken = purchases
                 .getString(IabConstant.BillingServiceConstants.INAPP_CONTINUATION_TOKEN.getValue());
@@ -512,6 +491,36 @@ public final class IabService {
      */
     public final Unit dispose() {
         return getActivity().map(IabServiceConnection::dispose).orSome(Unit.unit());
+    }
+
+    /**
+     * @see <a href="https://developer.android.com/intl/ja/google/play/billing/api.html#purchase">Purchasing Items #2</a>
+     * @param purchases result {@link IInAppBillingService#getPurchases(int, String, String, String)}
+     *
+     * @return List<P3<purchase data, signature, sku>>
+     */
+    static List<P3<String, String, String>> extractPurchaseBundle(final Bundle purchases) {
+
+        // TODO: refactor
+        final List<String> ownedSkus = List.list(purchases.getStringArrayList(
+                IabConstant.BillingServiceConstants.INAPP_ITEM_LIST.getValue()));
+        final List<String> purchaseDataList = List.list(purchases.getStringArrayList(
+                IabConstant.BillingServiceConstants.INAPP_PURCHASE_DATA_LIST.getValue()));
+        final List<String> signatureList = List.list(purchases.getStringArrayList(
+                IabConstant.BillingServiceConstants.INAPP_SIGNATURE_LIST.getValue()));
+
+        log.trace("purchases {}", purchases.toString());
+        log.trace("ownedSkus {}", ownedSkus.toString());
+        log.trace("purchaseDataList {}", purchaseDataList.toString());
+        log.trace("signatureList {}", signatureList.toString());
+
+        return purchaseDataList.zipIndex().map(withIndex -> {
+            final String purchaseData = withIndex._1();
+            final Integer index = withIndex._2();
+            final String signature = signatureList.index(index);
+            final String sku = ownedSkus.index(index);
+            return P.p(purchaseData, signature, sku);
+        });
     }
 
     static <E extends Throwable, A> Observable<A> validationToObservable(Validation<E, A> validation) {
