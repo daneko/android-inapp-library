@@ -7,10 +7,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import javax.annotation.Nonnull;
+import android.support.annotation.NonNull;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
+import butterknife.Bind;
 
 import fj.F;
 import fj.Unit;
@@ -47,22 +47,22 @@ public class BillingItemsArrayAdapter extends ArrayAdapter<Product> {
     }
 
     static class ViewHolder {
-        @InjectView(R.id.type_txt)
+        @Bind(R.id.type_txt)
         TextView typeView;
-        @InjectView(R.id.price_txt)
+        @Bind(R.id.price_txt)
         TextView priceView;
-        @InjectView(R.id.title_txt)
+        @Bind(R.id.title_txt)
         TextView titleView;
-        @InjectView(R.id.desc_txt)
+        @Bind(R.id.desc_txt)
         TextView descriptionView;
-        @InjectView(R.id.buy_txt)
+        @Bind(R.id.buy_txt)
         TextView canPurchaseView;
 
         ViewHolder(View view) {
-            ButterKnife.inject(this, view);
+            ButterKnife.bind(this, view);
         }
 
-        void setupView(@Nonnull final Product product) {
+        void setupView(@NonNull final Product product) {
             final SkuDetails item = product.getSkuDetails();
             typeView.setText(product.getBillingType().getDescription());
             priceView.setText(item.getPrice());

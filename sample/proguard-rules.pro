@@ -16,22 +16,24 @@
 #   public *;
 #}
 
-# rx java https://github.com/ReactiveX/RxJava/issues/1415
--dontwarn sun.misc.Unsafe
-
 # slf4j / logback https://github.com/tony19/logback-android#proguard
 -keep class ch.qos.** { *; }
 -keep class org.slf4j.** { *; }
 -keepattributes *Annotation*
 -dontwarn ch.qos.logback.core.net.*
 
-# butterknife http://jakewharton.github.io/butterknife/
--dontwarn butterknife.internal.**
--keep class **$$ViewInjector { *; }
--keepnames class * { @butterknife.InjectView *;}
-
 # retrolambda https://github.com/evant/gradle-retrolambda#proguard
 -dontwarn java.lang.invoke.*
 
-# inapp billing
--keep class com.android.vending.billing.**
+# butterknife
+-keep class butterknife.** { *; }
+-dontwarn butterknife.internal.**
+-keep class **$$ViewBinder { *; }
+
+-keepclasseswithmembernames class * {
+    @butterknife.* <fields>;
+}
+
+-keepclasseswithmembernames class * {
+    @butterknife.* <methods>;
+}

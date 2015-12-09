@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import android.support.v4.app.FragmentActivity;
+
 import fj.data.Option;
 
 import rx.Observable;
@@ -16,7 +18,7 @@ import lombok.Getter;
 import com.github.daneko.android.iab.IabContext;
 import com.github.daneko.android.iab.model.ActivityResults;
 
-public class MyActivity extends Activity implements IabContext {
+public class MyActivity extends FragmentActivity implements IabContext {
 
     @Getter
     private PublishSubject<ActivityResults> resultsPublish = PublishSubject.create();
@@ -26,7 +28,7 @@ public class MyActivity extends Activity implements IabContext {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
         if (savedInstanceState == null) {
-            getFragmentManager().beginTransaction()
+            getSupportFragmentManager().beginTransaction()
                     .add(R.id.container, new MyFragment())
                     .commit();
         }

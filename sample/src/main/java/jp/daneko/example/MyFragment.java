@@ -1,7 +1,6 @@
 package jp.daneko.example;
 
-import android.app.Activity;
-import android.app.Fragment;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,11 +9,14 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import javax.annotation.Nonnull;
+import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
 
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import butterknife.OnClick;
+
+import fj.function.TryEffect2;
 
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
@@ -31,10 +33,8 @@ import com.github.daneko.android.iab.model.Product;
 @Slf4j
 public class MyFragment extends Fragment {
 
-    @InjectView(R.id.item_list)
+    @Bind(R.id.item_list)
     ListView listView;
-
-    IabService iabService;
 
     public MyFragment() {
     }
@@ -42,32 +42,33 @@ public class MyFragment extends Fragment {
     IabContext context;
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        if (!(activity instanceof IabContext)) {
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (!(context instanceof IabContext)) {
             throw new RuntimeException();
         }
-        context = (IabContext) activity;
+        this.context = (IabContext) context;
     }
+
+    // verifyPurchaseLogic((s1, s2, e) -> true). // verify off, if try buy android.test.purchase.
+    private static final TryEffect2<String, String, Exception> verificationLogic
+            = IabService.defaultVerificationLogic(BuildConfig.PUBLIC_KEY);
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_my, container, false);
+        ButterKnife.bind(this, rootView);
 
-        iabService = IabService.builder(context, BuildConfig.PUBLIC_KEY, MyProducts.getAllItemData()).
-//                verifyPurchaseLogic((s1, s2, s3) -> true). // verify off, if try buy android.test.purchase.
-        build();
-        ButterKnife.inject(this, rootView);
         listView.setAdapter(new BillingItemsArrayAdapter(getActivity()));
         listView.setOnItemClickListener((adapter, view, pos, id) -> {
             final Product item = (Product) adapter.getItemAtPosition(pos);
             if (item.canBuy()) {
-                iabService.
-                        buyItem(item, 12345 + pos).
-                        subscribeOn(Schedulers.newThread()).
-                        observeOn(AndroidSchedulers.mainThread()).
-                        subscribe(
+                final int requestCode = 1234;
+                IabService.buyProduct(context, item, requestCode, verificationLogic)
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
                                 next -> {
                                     log.debug("onNext purchase success {}", next);
                                     toast("purchase success");
@@ -79,11 +80,10 @@ public class MyFragment extends Fragment {
                                 () -> log.debug("onCompleted purchase")
                         );
             } else if (item.canConsume()) {
-                iabService.
-                        consumeItem(item).
-                        subscribeOn(Schedulers.newThread()).
-                        observeOn(AndroidSchedulers.mainThread()).
-                        subscribe(
+                IabService.consumeProduct(getActivity(), item)
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(
                                 next -> {
                                     log.debug("onNext consume success");
                                     toast("consume success");
@@ -104,18 +104,18 @@ public class MyFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        iabService.dispose();
-        ButterKnife.reset(this);
+        ButterKnife.unbind(this);
     }
 
     @OnClick(R.id.button1)
     public void b1Click(Button button) {
         ((BillingItemsArrayAdapter) listView.getAdapter()).clear();
-        iabService.
-                findBillingItem().
-                subscribeOn(Schedulers.newThread()).
-                observeOn(AndroidSchedulers.mainThread()).
-                subscribe(
+        IabService.fetchProduct(getActivity(),
+                verificationLogic,
+                MyProducts.getAllItemData())
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
                         next -> {
                             log.debug("onNext");
                             ((BillingItemsArrayAdapter) listView.getAdapter()).add(next);
@@ -133,7 +133,7 @@ public class MyFragment extends Fragment {
     public void b2Click(Button button) {
     }
 
-    private void toast(@Nonnull final String msg) {
+    private void toast(@NonNull final String msg) {
         log.debug("toast {}", msg);
         Toast.makeText(getActivity(), msg, Toast.LENGTH_LONG).show();
     }
