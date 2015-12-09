@@ -1,4 +1,4 @@
-Copyright (c) 2014 daneko
+Copyright (c) 2014- daneko
 All rights reserved.
 
 Permission is hereby granted, free  of charge, to any person obtaining

@@ -1,9 +1,6 @@
-### Inapp Billing v3 wrap Library
+## Android Inapp Library
 
-* SDKに付属するサンプルをベースにRxJava使って再実装してみた
-* だれか「こう書くんだよ！」みたいなツッコミください
-* 動作未保証
-  * ていうかまだ全部は確認してない (できてない)
+* this is Inapp Billing v3 wrap Library
 
 ** this software includes the work that is distributed in the Apache License 2.0 **
 
@@ -15,24 +12,26 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.daneko:android-inapp-library:0.0.1-SNAPSHOT'
+    compile 'com.github.daneko:android-inapp-library:0.1.0'
 }
 ```
 
 
 ### use library
 
-* [Lombok](http://projectlombok.org/) [(license MIT)](https://github.com/rzwitserloot/lombok/blob/master/LICENSE)
-* [RxAndroid](https://github.com/ReactiveX/RxAndroid) ([license apache license 2.0](https://github.com/ReactiveX/RxAndroid/blob/0.x/LICENSE))
-* [retrolambda](https://github.com/orfjackal/retrolambda) ([license apache license 2.0](https://github.com/orfjackal/retrolambda/blob/master/LICENSE.txt))
-* [FunctionalJava](http://www.functionaljava.org/) ([license BSD 3](https://github.com/functionaljava/functionaljava#license))
-* [JSR305](https://code.google.com/p/jsr-305/) ([license BSD 3](http://opensource.org/licenses/BSD-3-Clause))
+* [RxJava](https://github.com/ReactiveX/RxJava) ([license apache license 2.0](https://github.com/ReactiveX/RxJava/blob/v1.0.16/LICENSE))
+* [FunctionalJava](http://www.functionaljava.org/) ([license BSD 3](https://github.com/functionaljava/functionaljava/tree/v4.4#license))
 * [slf4j](http://slf4j.org/) ([license MIT](http://slf4j.org/license.html))
+* [kotlin stdlib](https://kotlinlang.org/api/latest/jvm/stdlib/index.html) ([license apache license 2.0](https://github.com/JetBrains/kotlin/blob/build-1.0.0-beta%2B1019/license/LICENSE.txt))
 
 ### use library in sample app
 
 * [ButterKnife](http://jakewharton.github.io/butterknife/) ([license apache license 2.0](https://github.com/JakeWharton/butterknife/blob/master/LICENSE.txt))
 * [logback android](http://tony19.github.io/logback-android/) (license EPL)
+* [retrolambda](https://github.com/orfjackal/retrolambda) ([license apache license 2.0](https://github.com/orfjackal/retrolambda/blob/master/LICENSE.txt))
+* [Lombok](http://projectlombok.org/) [(license MIT)](https://github.com/rzwitserloot/lombok/blob/master/LICENSE)
+* [RxAndroid](https://github.com/ReactiveX/RxAndroid) ([license apache license 2.0](https://github.com/ReactiveX/RxAndroid/blob/v1.0.0/LICENSE))
+
 
 ### for Android Studio
 
@@ -59,12 +58,11 @@ release.aliasPass=alias pass
 
 ### try alpha apk
 
-* join [google group](https://groups.google.com/forum/#!forum/daneko-testapp)
-* and [download apk](https://play.google.com/apps/testing/jp.daneko.example)
+* [register alpha test & download apk](https://play.google.com/apps/testing/jp.daneko.example)
 
 ### License
 
 (The MIT License)
 
-Copyright (c) 2014 daneko
+Copyright (c) 2014- daneko
 
