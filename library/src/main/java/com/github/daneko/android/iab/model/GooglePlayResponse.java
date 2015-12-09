@@ -16,6 +16,10 @@ public enum GooglePlayResponse {
     private final int code;
     private final String description;
 
+    public boolean isSuccess(){
+        return this == OK;
+    }
+
     public int getCode() {
         return this.code;
     }
@@ -37,5 +41,4 @@ public enum GooglePlayResponse {
         }
         throw new IllegalArgumentException(String.format("unknown response code: %d", value));
     }
-
 }

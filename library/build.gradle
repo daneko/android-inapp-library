@@ -1,83 +1,55 @@
 buildscript {
+    ext.kotlin_version = '1.0.0-beta-3595'
     repositories {
-        jcenter()
+        mavenCentral()
     }
-
     dependencies {
-        classpath 'me.tatarka:gradle-retrolambda:3.2.0'
-        classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.+'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
-// local.properties
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-def j8Home = properties.getProperty('java8_home')
-def j7Home = properties.getProperty('java7_home')
-def m2dir = properties.getProperty('upload.dir')
-
-apply plugin: 'android-sdk-manager'
 apply plugin: 'com.android.library'
-apply plugin: 'me.tatarka.retrolambda'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'kotlin-android'
+
+def GROUP_ID = 'com.github.daneko'
+def LIBRARY_NAME = 'android-inapp-library'
+def NAME = 'Android Inapp Library'
 
 
 android {
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    compileSdkVersion 22
-    buildToolsVersion "22.0.1"
+    compileSdkVersion versions.compileSdk
+    buildToolsVersion versions.buildTools
 
     defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 22
+        minSdkVersion versions.minSdk
+        targetSdkVersion versions.targetSdk
         versionCode 1
-        versionName "1.0"
+        versionName versions.library
+        consumerProguardFiles 'proguard-rules.pro'
     }
 
-    buildTypes {
-        spock {}
-
-        release {
-            minifyEnabled false
-        }
-    }
-
-    // 一旦checkコマンドを走らせるためにlint時にabortしないようにする
     lintOptions {
         abortOnError false
     }
-}
 
-configurations {
-    export_jar
-    compile.extendsFrom export_jar
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
+    }
 }
 
 dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "com.android.support:support-annotations:$versions.supportLib"
+    compile "io.reactivex:rxjava:${versions.rx}"
+    compile "org.functionaljava:functionaljava:${versions.fj}"
+    compile 'org.slf4j:slf4j-api:1.7.6'
 
-    export_jar 'io.reactivex:rxandroid:0.25.0'
-
-    export_jar 'org.functionaljava:functionaljava:4.4'
-
-    export_jar 'org.slf4j:slf4j-api:1.7.6'
-
-    export_jar 'com.google.code.findbugs:jsr305:3.0.0'
-
-    provided 'org.projectlombok:lombok:1.16.4'
-}
-
-retrolambda {
-
-    jdk j8Home ?: System.getenv("JAVA8_HOME")
-    oldJdk j7Home ?: System.getenv("JAVA7_HOME")
-    javaVersion JavaVersion.VERSION_1_7
-    defaultMethods true
-    incremental false
-    //jvmArgs '-arg1', '-arg2'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.assertj:assertj-core:1.7.1'
+    testCompile 'org.mockito:mockito-all:1.10.19'
+    testCompile 'ch.qos.logback:logback-classic:1.1.2'
 }
 
 /**
@@ -88,42 +60,58 @@ task androidSourcesJar(type: Jar) {
     from android.sourceSets.main.java.sourceFiles
 }
 
-artifacts {
-    archives androidSourcesJar
+def commonPom = {
+    licenses {
+        license {
+            name 'The MIT License'
+            url 'https://github.com/daneko/android-inapp-library/blob/master/LICENSE.txt'
+            distribution 'repo'
+        }
+    }
+    issueManagement {
+        system 'github'
+        url 'https://github.com/daneko/android-inapp-library/issues'
+    }
+    scm {
+        url 'scm:https://github.com/daneko/android-inapp-library'
+        connection 'scm:git@github.com:daneko/android-inapp-library.git'
+        developerConnection 'scm:git@github.com:daneko/android-inapp-library.git'
+    }
 }
 
-def repoPath = m2dir ?: "/tmp"
+publishing {
+    publications {
+        aar(MavenPublication) {
+            groupId GROUP_ID
+            artifactId LIBRARY_NAME
+            version versions.library
+            artifact file("${project.buildDir}/outputs/aar/${project.name}-release.aar")
+            artifact androidSourcesJar
+            pom.withXml {
+                Node root = asNode()
+                root.appendNode('name', LIBRARY_NAME)
+                root.appendNode('description', NAME)
+                root.appendNode('url', 'https://github.com/daneko/android-inapp-library')
+                root.children().last() + commonPom
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: uri("${repoPath}/repository"))
-            pom.version = '0.0.1-SNAPSHOT'
-            pom.groupId = 'com.github.daneko'
-            pom.artifactId = 'android-inapp-library'
-            pom.project {
-                inceptionYear '2014'
-                packaging 'aar'
-                licenses {
-                    license {
-                        name 'The MIT License'
-                        url 'https://github.com/daneko/android-inapp-library/blob/master/LICENSE.txt'
-                        distribution 'repo'
-                    }
-                }
-                scm {
-                    connection 'scm:https://daneko@github.com/daneko/android-inapp-library'
-                    developerConnection 'scm:daneko@github.com/daneko/android-inapp-library.git'
-                    url 'https://github.com/daneko/android-inapp-library'
+                // http://stackoverflow.com/a/24764713/4221135
+                def dependenciesNode = asNode().appendNode('dependencies')
+                //Iterate over the compile dependencies (we don't want the test ones), adding a <dependency> node for each
+                configurations.compile.allDependencies.each {
+                    def dependencyNode = dependenciesNode.appendNode('dependency')
+                    dependencyNode.appendNode('groupId', it.group)
+                    dependencyNode.appendNode('artifactId', it.name)
+                    dependencyNode.appendNode('version', it.version)
                 }
             }
         }
     }
+    repositories {
+        maven {
+            url "${env.m2dir}"
+        }
+    }
 }
 
-task zip2jar(type: Zip, dependsOn: "bundleSpock") {
-    from 'build/intermediates/classes/spock', configurations.export_jar.collect { it.isDirectory() ? it : zipTree(it) }
-    destinationDir = file('build/fortest')
-    extension = 'jar'
-}
-
+publish.dependsOn 'assembleRelease'
+publishToMavenLocal.dependsOn 'assembleRelease'
