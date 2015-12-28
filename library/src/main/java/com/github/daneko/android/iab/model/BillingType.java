@@ -3,8 +3,6 @@ package com.github.daneko.android.iab.model;
 
 import android.support.annotation.NonNull;
 
-import com.github.daneko.android.iab.IabService;
-
 /**
  */
 public enum BillingType {
