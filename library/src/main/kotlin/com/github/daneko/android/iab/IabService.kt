@@ -114,7 +114,7 @@ object IabService {
                             Pair(it.getStringExtra(IabConstant.BillingServiceConstants.INAPP_PURCHASE_DATA.value),
                                     it.getStringExtra(IabConstant.BillingServiceConstants.INAPP_SIGNATURE.value))
                         }.flatMap {
-                            fromValidation(Purchase.create(verificationLogic)(it.first, it.second)).
+                            fromValidation(Purchase.create(verificationLogic)(it.first)(it.second)).
                                     map { buyItem.copy(purchaseInfo = Option.some(it)) }
                         }
                     } else {
@@ -241,7 +241,7 @@ object IabService {
                 }.
                 doOnNext { log.trace("purchase data: $it") }.
                 flatMap { triple ->
-                    fromValidation(Purchase.create(verificationLogic)(triple.second, triple.third))
+                    fromValidation(Purchase.create(verificationLogic)(triple.second)(triple.third))
                 }
 
         return purchaseBundleObservable.

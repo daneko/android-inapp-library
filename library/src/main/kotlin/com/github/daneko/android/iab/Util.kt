@@ -28,3 +28,6 @@ response Bundle:  $response
         } else {
             Observable.just(response)
         }
+
+internal fun <A, E, B> fj.data.Validation<E, A>.failMap(f: (E) -> B): fj.data.Validation<B, A> =
+        fj.data.Validation.validation(toEither().left().map { f(it) })
