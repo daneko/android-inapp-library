@@ -1,10 +1,9 @@
 buildscript {
-    ext.kotlin_version = '1.0.0-beta-3595'
     repositories {
         mavenCentral()
     }
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$versions.kotlin"
     }
 }
 
@@ -40,10 +39,10 @@ android {
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$versions.kotlin"
     compile "com.android.support:support-annotations:$versions.supportLib"
-    compile "io.reactivex:rxjava:${versions.rx}"
-    compile "org.functionaljava:functionaljava:${versions.fj}"
+    compile "io.reactivex:rxjava:$versions.rx"
+    compile "org.functionaljava:functionaljava:$versions.fj"
     compile 'org.slf4j:slf4j-api:1.7.6'
 
     testCompile 'junit:junit:4.12'

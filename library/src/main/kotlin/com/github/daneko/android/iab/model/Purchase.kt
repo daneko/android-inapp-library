@@ -76,7 +76,7 @@ data class Purchase protected constructor(
                                                 IabException("json exception: $purchaseData", it)
                                             })
                                 }.
-                                map(F<JSONObject, Purchase> { json -> create(json, signature) }).
+                                map { json -> create(json, signature) }.
                                 bind { purchase: Purchase ->
                                     Validation.condition(
                                             purchase.token.isNotEmpty(),

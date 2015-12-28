@@ -10,7 +10,6 @@ import com.android.vending.billing.IInAppBillingService
 import com.github.daneko.android.iab.exception.IabException
 import com.github.daneko.android.iab.model.GooglePlayResponse
 import com.github.daneko.android.iab.model.IabItemType
-import fj.F
 import fj.data.Option
 import org.slf4j.LoggerFactory
 import rx.Observable
@@ -60,7 +59,7 @@ internal open class PlayMarketConnection(val context: Context) : ServiceConnecti
         intent.setPackage(marketPackage)
 
         return Option.iif(context.packageManager.queryIntentServices(intent, 0).isNotEmpty(), flags).
-                map(F<Int, Boolean> { context.bindService(intent, this@PlayMarketConnection, it) }).orSome(false)
+                map { context.bindService(intent, this@PlayMarketConnection, it) }.orSome(false)
     }
 
     private fun connectionClose() {

@@ -1,6 +1,6 @@
 package com.github.daneko.android.iab.model
 
-import fj.F2Functions
+import fj.F
 import fj.Ord
 import fj.Ordering
 
@@ -16,9 +16,11 @@ class ProductBaseInfo(internal val id: String, internal val type: BillingType) :
 
     companion object {
         @JvmStatic
-        val ord: Ord<ProductBaseInfo> = Ord.ord(F2Functions.curry { a: ProductBaseInfo, b: ProductBaseInfo ->
-            val x = a.compareTo(b)
-            if (x < 0) Ordering.LT else if (x == 0) Ordering.EQ else Ordering.GT
-        })
+        val ord: Ord<ProductBaseInfo> = Ord.ord { a: ProductBaseInfo ->
+            F { b: ProductBaseInfo ->
+                val x = a.compareTo(b)
+                if (x < 0) Ordering.LT else if (x == 0) Ordering.EQ else Ordering.GT
+            }
+        }
     }
 }

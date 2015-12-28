@@ -11,7 +11,8 @@ ext {
             fj         : '4.4',
             junit      : '4.12',
             assertjCore: '1.7.1',
-            library    : '0.1.0',
+            library    : '0.1.1-SNAPSHOT',
+            kotlin     : '1.0.0-beta-4584',
     ]
 
     Properties properties = new Properties()
