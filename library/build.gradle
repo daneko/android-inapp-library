@@ -7,14 +7,16 @@ buildscript {
     }
 }
 
-apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
-apply plugin: 'kotlin-android'
-
 def GROUP_ID = 'com.github.daneko'
 def LIBRARY_NAME = 'android-inapp-library'
 def NAME = 'Android Inapp Library'
 
+Boolean releaseFlag = project.getProperties().get("release") == "true"
+def VERSION_NAME = versions.library + (releaseFlag ? '' : '-SNAPSHOT')
+
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion versions.compileSdk
@@ -23,8 +25,6 @@ android {
     defaultConfig {
         minSdkVersion versions.minSdk
         targetSdkVersion versions.targetSdk
-        versionCode 1
-        versionName versions.library
         consumerProguardFiles 'proguard-rules.pro'
     }
 
@@ -83,7 +83,7 @@ publishing {
         aar(MavenPublication) {
             groupId GROUP_ID
             artifactId LIBRARY_NAME
-            version versions.library
+            version VERSION_NAME
             artifact file("${project.buildDir}/outputs/aar/${project.name}-release.aar")
             artifact androidSourcesJar
             pom.withXml {
