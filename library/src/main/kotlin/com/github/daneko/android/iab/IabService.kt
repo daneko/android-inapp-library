@@ -179,9 +179,9 @@ object IabService {
                              productIdList: List<ProductBaseInfo>,
                              iabType: IabItemType): Observable<Product> {
 
-        val productIdRawList: ArrayList<String> = productIdList.
+        val productIdRawList: ArrayList<String> = ArrayList(productIdList.
                 filter { it.type.iabItemType == iabType }.
-                map { it.id }.toArrayList()
+                map { it.id })
 
         if (productIdRawList.isEmpty()) {
             return Observable.empty()
