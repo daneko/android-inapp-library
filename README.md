@@ -12,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.daneko:android-inapp-library:0.1.0'
+    compile 'com.github.daneko:android-inapp-library:0.1.1'
 }
 ```
 
@@ -44,8 +44,8 @@ dependencies {
 
 ```
 sdk.dir=/usr/local/opt/android-sdk
-java8_home=/Library/Java/JavaVirtualMachines/jdk1.8.0_20.jdk/Contents/Home
-java7_home=/Library/Java/JavaVirtualMachines/jdk1.7.0_67.jdk/Contents/Home
+java8_home=/Library/Java/JavaVirtualMachines/jdk1.8.0_74.jdk/Contents/Home
+java7_home=/Library/Java/JavaVirtualMachines/jdk1.7.0_79.jdk/Contents/Home
 
 ## for sample app
 
