@@ -33,7 +33,7 @@ android {
         applicationId "jp.daneko.example"
         minSdkVersion versions.minSdk
         targetSdkVersion versions.targetSdk
-        versionCode 5
+        versionCode 6
         versionName versions.library
         buildConfigField "String", "PUBLIC_KEY", "\"$publicKey\""
     }
